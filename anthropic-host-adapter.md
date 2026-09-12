@@ -36,6 +36,8 @@ python "<RES>/scripts/bootstrap.py" --workspace "<WORKSPACE>" --profile modeling
 
 ## 原绘图模式的项目标记
 
+设置标记前执行 [配色选择](color-selection.md) 的询问与选择规则。以下为原模式默认值；用户选择其他配色时，仅按该文件替换颜色标记，其余适配行为不变。
+
 用户未指定模式时不写固定色板，保留原版按项目名选择风格的行为。用户已选择模式时，在工作区 `CLAUDE.md` 中保留已有内容，仅设置原工具读取的对应标记：
 
 - expressive：`MH_DATA_FIG_PALETTE=custom`、`MH_DATA_FIG_COLORS=#4ECDC4,#FF6B6B,#45B7D1,#F7A072,#A06CD5,#F79256,#7DCFB6`、`MH_DATA_FIG_STYLE=clean_open`。

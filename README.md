@@ -20,6 +20,12 @@ git clone https://github.com/yjz211/vivid-figures-skill.git .claude/skills/vivid
 
 重新启动或重新打开 Anthropic 宿主后，让 Claude 自动选择本 Skill；支持斜杠技能调用的宿主也可使用 `/vivid-figures-skill`。
 
+## 绘图模式与配色
+
+鲜艳舒适型（expressive）和稳重科研型（restrained）都可选择：珊瑚青绿、海洋暖橙、鸢尾杏桃、森林日光、浆果冰蓝、科研原配色，也支持自定义颜色。模式原配色分别是珊瑚青绿和科研原配色。
+
+使用时 Agent 会先询问尚未确定的模式/配色；已明确选择、要求沿用、使用默认或交给 Agent 决定时，不重复询问。例如：“用稳重版，海洋暖橙配色画图”。配色只改变颜色搭配，原有选图、模板、渐变层次、尺寸与修复流程不变。完整选项与标记格式见 [配色选择](color-selection.md)。
+
 ## 电脑需要安装什么
 
 ### 基础数据图：必须
