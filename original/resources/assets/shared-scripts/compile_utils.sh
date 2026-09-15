@@ -97,7 +97,7 @@ done
 echo "  done"
 
 # 2.5 修复封面 \cline{N-N} 被当文本渲染的问题
-# Claude 有时在封面 tabular 中把 \cline 写在文本位置而非行分隔符位置
+# 助手 有时在封面 tabular 中把 \cline 写在文本位置而非行分隔符位置
 echo "--- 修复封面 cline 问题 ---"
 for f in "$PAPER_DIR"/main.tex "$PAPER_DIR"/sections/*.tex; do
     [ -f "$f" ] || continue
@@ -235,10 +235,10 @@ fi
 echo "--- 附录代码去指纹（抹 __mh_autobootstrap_syspath__）---"
 for f in "$PAPER_DIR"/sections/*.tex "$PAPER_DIR"/main.tex; do
     [ -f "$f" ] || continue
-    TARGET_FILE="$f" MH_PAPER_DIR="$PAPER_DIR" "$PYTHON" - <<'PYEOF' 2>/dev/null
+    TARGET_FILE="$f" VIVID_PAPER_DIR="$PAPER_DIR" "$PYTHON" - <<'PYEOF' 2>/dev/null
 import os, re
 fp = os.environ['TARGET_FILE']
-paper_dir = os.environ['MH_PAPER_DIR']
+paper_dir = os.environ['VIVID_PAPER_DIR']
 try:
     content = open(fp, encoding='utf-8', errors='ignore').read()
 except OSError:
@@ -1085,7 +1085,7 @@ for f in "$PAPER_DIR"/sections/*.tex; do
     fi
 done
 
-# 9.1 自动检测并报告未嵌入的图表（供 Claude 编译步骤修复）
+# 9.1 自动检测并报告未嵌入的图表（供 助手 编译步骤修复）
 echo "--- 未嵌入图表检测 ---"
 UNEMBED_COUNT=0
 UNEMBED_LIST=""
@@ -1201,7 +1201,7 @@ for f in "$PAPER_DIR"/main.tex "$PAPER_DIR"/sections/*.tex; do
         sed -i 's/\[中文摘要内容[^]]*\]//g; s/\[English abstract[^]]*\]//g' "$f"
         sed -i 's/\[关键词1\]//g; s/\[关键词2\]//g; s/\[关键词3\]//g' "$f"
     fi
-    # stats 模板封面特有占位符检查（不自动清理，必须由 Claude 手动替换）
+    # stats 模板封面特有占位符检查（不自动清理，必须由 助手 手动替换）
     if grep -q '\[学校名称\]\|\[队员1\]\|\[指导老师\]\|\[竞赛年份\]\|\[届数\]' "$f" 2>/dev/null; then
         echo "  ⚠ $(basename $f) 中发现 stats 封面占位符未替换：[学校名称]/[队员]/[指导老师]/[竞赛年份]"
         echo "    → 必须替换这些占位符，否则封面会显示方括号文字"
@@ -1240,8 +1240,8 @@ if [ -f "$PAPER_DIR/main.tex" ]; then
             if [ -z "$TITLE_CLEAN" ]; then
                 echo "  ⛔ \\title{} 内容为空，尝试自动修复..."
                 FALLBACK_TITLE=""
-                if [ -f "CLAUDE.md" ]; then
-                    FALLBACK_TITLE=$(grep -oP '(?<=题目|赛题|title)[：:]\s*\K.+' CLAUDE.md 2>/dev/null | head -1 | sed 's/[[:space:]]*$//')
+                if [ -f ".vivid/config.json" ]; then
+                    FALLBACK_TITLE=$(python _utils/vivid_config.py get title)
                 fi
                 if [ -z "$FALLBACK_TITLE" ] && [ -f "PROBLEM_ANALYSIS.md" ]; then
                     FALLBACK_TITLE=$(head -5 PROBLEM_ANALYSIS.md | grep -oP '(?<=^# |^## ).+' | head -1)
@@ -1263,8 +1263,8 @@ if [ -f "$PAPER_DIR/main.tex" ]; then
         else
             echo "  ⛔ main.tex 中没有 \\title 命令，自动插入..."
             FALLBACK_TITLE="数学建模竞赛论文"
-            if [ -f "CLAUDE.md" ]; then
-                FT=$(grep -oP '(?<=题目|赛题|title)[：:]\s*\K.+' CLAUDE.md 2>/dev/null | head -1 | sed 's/[[:space:]]*$//')
+            if [ -f ".vivid/config.json" ]; then
+                FT=$(python _utils/vivid_config.py get title)
                 [ -n "$FT" ] && FALLBACK_TITLE="$FT"
             fi
             sed -i "/\\\\begin{document}/i \\\\title{$FALLBACK_TITLE}" "$PAPER_DIR/main.tex"

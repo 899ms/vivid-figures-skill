@@ -274,7 +274,7 @@ Also never write just: "如表所示，我们的方法表现最好" / "As shown 
 - **⛔ 图片高度规则**：单张图不能超过页面高度的 70%（约 18cm）。如果数据条目多（如 20+ 个类别的柱状图），必须限制 figsize 高度或分成多张子图。Python 生成时 `figsize=(width, height)` 的 height 不要超过 8（英寸）。超长的横向柱状图（30+ 条目）改用 `figsize=(7, 6)` + 缩小字号，或者只展示 Top 15/20。
 - Float specifier（受控浮动）：图用 `[H]`（就地钉死），表用 `[H]`（就地），伪代码 `[H]`（均需 `\usepackage{float}`）。图用 `[H]` 是为了钉在引出文字正下方、从机制上杜绝"多图连排/浮动堆叠一页"（`[htbp]` 会让 LaTeX 把多张图攒到一页，最伤可读性）。代价：极少数"图接近整页高 + 恰好落页底"时 `[H]` 放不下就整块下移、上方留一段空白，但图已被 `keepaspectratio` 限高在 `0.9\textheight` 内、且每张图前后都要有引导/承接文字，此情形罕见，取舍上优于连排。模板已加载 `\usepackage[section]{placeins}`，每节末自动 `\FloatBarrier`（防残余浮动体跨节）。⛔ 表格同样别用 `[htbp]`：会被 `\FloatBarrier` 逼到节末，在表上方留半页空白。`\includegraphics` 用 `width=0.85\textwidth,keepaspectratio` 以宽为主，不要加 `height=0.38\textheight` 这种小限高（会把方图/竖图压得更小）；只有确实接近整页高、可能溢出的图才加 `height=0.9\textheight` 兜底
 - Figure/table captions: keep short (one line, ≤20 Chinese characters or ≤12 English words). Detailed descriptions go in the body text before/after the figure, not in the caption. Example: `\caption{残差诊断四联图}` not `\caption{Wiener 过程模型残差诊断。(a) Q-Q 图检验正态性;(b) 残差 vs 拟合值检验同方差性;(c) 残差直方图与标准正态分布对比;(d) 残差 vs 时间检验独立性。}`
-- **⛔ Caption 分隔符必须是空格，不能是冒号。** 中文论文的图表标题格式是"图 1 xxx"而不是"图 1: xxx"。在 preamble 中必须有 `\captionsetup{labelsep=quad}` 或 `\captionsetup{labelsep=space}`。如果模板已有此设置则不要重复添加。如果 Claude 自己写 main.tex，必须在 `\usepackage{caption}` 后加 `\captionsetup{labelsep=quad}`
+- **⛔ Caption 分隔符必须是空格，不能是冒号。** 中文论文的图表标题格式是"图 1 xxx"而不是"图 1: xxx"。在 preamble 中必须有 `\captionsetup{labelsep=quad}` 或 `\captionsetup{labelsep=space}`。如果模板已有此设置则不要重复添加。如果 助手 自己写 main.tex，必须在 `\usepackage{caption}` 后加 `\captionsetup{labelsep=quad}`
 - Wide tables (≥6 columns or multiple `p{}` columns): wrap with `\resizebox{\textwidth}{!}{...}`
 - Narrow tables (≤4 columns): do not use `\resizebox` — it stretches text to full width, font becomes huge, table fills entire page
 - Medium tables (5 columns): use `\resizebox` only if the table actually overflows margins; when in doubt, skip it
@@ -389,7 +389,7 @@ for text in ax.texts:
   - ✅ 正确：将每个要点展开为完整段落，用"首先...其次...此外..."等过渡词连接，或用"（1）...（2）...（3）..."行内编号
 - **⛔ 正文中禁止出现元叙述和内部指令。** 以下内容绝对不能出现在论文正文中：
   - "参赛者"、"参赛队伍"、"我们团队" → 用"本文"代替
-  - "RESULTS.md"、"figures/*.json"、"CLAUDE.md"、"MODELING_REPORT.md" 等文件名 → 这些是内部工作文件，不是论文内容
+  - "RESULTS.md"、"figures/*.json"、".vivid/config.json"、"MODELING_REPORT.md" 等文件名 → 这些是内部工作文件，不是论文内容
   - "数据驱动"、"可解释建模"等原则性描述如果是从 SKILL 指令中复制的，不要原样写入正文
   - "竞赛特征"、"竞赛要求" → 论文是独立的学术文档，不要提及竞赛本身的规则或要求
   - 任何看起来像是"给 AI 的指令"而不是"给读者的分析"的内容
@@ -598,7 +598,7 @@ cat _tmp/_cited_keys.txt
 **⛔ 优先使用 scholar_fetch.py 工具（环境变量 `$SCHOLAR_SCRIPT`）自动获取 BibTeX。**
 
 ```bash
-PYTHON=""; for _c in "$MH_PYTHON" python python3; do [ -z "$_c" ] && continue; if $_c -c "import sys" >/dev/null 2>&1; then PYTHON="$_c"; break; fi; done; [ -z "$PYTHON" ] && PYTHON=python
+PYTHON=""; for _c in "$VIVID_PYTHON" python python3; do [ -z "$_c" ] && continue; if $_c -c "import sys" >/dev/null 2>&1; then PYTHON="$_c"; break; fi; done; [ -z "$PYTHON" ] && PYTHON=python
 # 对每个引用 key，用 scholar_fetch.py 搜索并获取 BibTeX
 # ⛔ 必须把 citation key 还原成检索关键词再搜：key 形如 wang2023supply / smith_2021_gnn，
 #    直接拿裸 key 当查询词命中率极低 → 搜空 → 被迫编造。去掉 TODO 前缀、下划线转空格。

@@ -24,7 +24,7 @@
 python examples/palette-posters/render.py
 ```
 
-可使用 `--output <目录>` 更改输出位置。需要仓库 Python 绘图依赖及微软雅黑、Noto Sans CJK SC、苹方或黑体之一。颜色直接读取 [color-selection.md](../../color-selection.md)，通过临时项目的原有配色标记接口传入 `setup_style()`，不修改默认配色或已安装的 Skill。
+可使用 `--output <目录>` 更改输出位置。需要仓库 Python 绘图依赖及微软雅黑、Noto Sans CJK SC、苹方或黑体之一。颜色直接读取 [palettes.json](../../original/resources/assets/shared-scripts/palettes.json)，通过临时项目的统一配置传入 `setup_style()`，不修改默认配色或已安装的 Skill。
 
 原三张图共用固定种子 `20260915` 生成的 [demo-data.json](demo-data.json)，与本次充电调度实测数据无关：
 

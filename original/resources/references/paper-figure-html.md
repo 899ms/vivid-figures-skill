@@ -1,13 +1,6 @@
----
-name: paper-figure-html
-description: "用 HTML+CSS 画流程图/技术路线图/系统架构图/流水线/框架矩阵图，再用 Electron printToPDF 转成矢量 PDF 供论文 \\includegraphics 引用。paper-figure-drawio 的 HTML 平替（默认）。当用户说\"画HTML图\"、\"技术路线图\"、\"流程图\"或需要论文非数据类示意图时使用。"
-argument-hint: [figure-plan-or-data-path]
-allowed-tools: Bash(*), Read, Write, Edit, Grep, Glob, Agent
----
-
 # Paper Figure — HTML/CSS 矢量图（Sub-step）
 
-用 HTML+CSS 生成论文非数据类示意图：**$ARGUMENTS**
+用 HTML+CSS 生成论文非数据类示意图：用户提供的数据与绘图要求
 
 这是从 paper-figure 拆出的**轻量子步骤**，是 `paper-figure-drawio` 的 **HTML 平替**（用户可二选一，HTML 为默认）。只处理架构/流程/路线类示意图，数据图（matplotlib/seaborn）已在前一步 paper-figure 生成。
 
@@ -17,7 +10,7 @@ allowed-tools: Bash(*), Read, Write, Edit, Grep, Glob, Agent
 
 ```bash
 FAST_MODE=0
-grep -q 'MH_FAST_MODE=1' CLAUDE.md 2>/dev/null && FAST_MODE=1
+[ "$(python _utils/vivid_config.py get fast_mode)" = "1" ] && FAST_MODE=1
 echo "FAST_MODE=$FAST_MODE"
 ```
 
@@ -28,70 +21,19 @@ echo "FAST_MODE=$FAST_MODE"
 - **FIG_DIR = `figures/`**
 - **CUSTOM_REQUIREMENTS** — 用户自定义要求，最高优先级。
 
-## ⛔ 工具路径解析（每次开头先跑，后续步骤都用这些变量）
+## 工具路径
 
-本 skill 的模板、主题、质检脚本运行时由后端注入到工作区。位置可能在 `_templates/`（模板目录，一定会注入）或 `_utils/`（脚本目录）。用防御式解析，找不到不报错、优雅降级：
+先按宿主说明执行 bootstrap，使用选定的 Python。`.vivid/runtime.json` 的 `runtime_skill` 是资源目录；渲染器为该目录的 `scripts/render_html.py`，下文记为 `$CAPTURE`。PDF 检查工具为 `_templates/html_pdf_check.py`，记为 `$HTMLCHECK`。
 
 ```bash
-PYTHON=""; for _c in "$MH_PYTHON" python python3; do [ -z "$_c" ] && continue; if $_c -c "import sys" >/dev/null 2>&1; then PYTHON="$_c"; break; fi; done; [ -z "$PYTHON" ] && PYTHON=python
-# ⛔ 这台机器必须用 python，不能用 python3（python3 触发 Microsoft Store 存根，exit 49）
-
-# 模板目录：优先 _templates/，回退到 skill 源目录
-TPL_DIR=""
-for d in _templates skills/paper-figure-html/templates _utils; do
-  if [ -f "$d/tpl_roadmap.html" ]; then TPL_DIR="$d"; break; fi
-done
-echo "模板目录 TPL_DIR=$TPL_DIR"
-
-# 出图工具（screenshot_capture.py，后端复制进 _utils/）
-CAPTURE=""
-for f in _utils/screenshot_capture.py tools/screenshot_capture.py; do
-  [ -f "$f" ] && { CAPTURE="$f"; break; }
-done
-echo "出图工具 CAPTURE=$CAPTURE"
-
-# HTML/PDF 质检脚本（优先 _utils/，回退 _templates/、skill 源目录）
-HTMLCHECK=""
-for f in _utils/html_pdf_check.py _templates/html_pdf_check.py skills/paper-figure-html/tools/html_pdf_check.py; do
-  [ -f "$f" ] && { HTMLCHECK="$f"; break; }
-done
-echo "质检脚本 HTMLCHECK=$HTMLCHECK"
-
-# 视觉自检脚本（复用 drawio_vision_check.py，与画图引擎无关；不存在则跳过视觉自检）
-VISION=""
-for f in _utils/drawio_vision_check.py tools/drawio_vision_check.py; do
-  [ -f "$f" ] && { VISION="$f"; break; }
-done
-echo "视觉自检 VISION=${VISION:-（不可用，将跳过视觉自检）}"
-
-# ===== TikZ 依赖（仅当规划有精密几何图才用；公式本身走 HTML+KaTeX，几何示意才靠 xelatex 编译 TikZ）=====
-# 规则文档（物理尺寸/字号/scale 匹配规则）
-TIKZ_RULES=""
-for f in _utils/tikz_rules.md skills/shared-scripts/tikz_rules.md; do
-  [ -f "$f" ] && { TIKZ_RULES="$f"; break; }
-done
-echo "TikZ 规则 TIKZ_RULES=${TIKZ_RULES:-（无，将用内置规则）}"
-
-# tikz_check.sh 结构自检脚本
-TIKZ_CHECK=""
-for f in _utils/tikz_check.sh skills/shared-scripts/tikz_check.sh; do
-  [ -f "$f" ] && { TIKZ_CHECK="$f"; break; }
-done
-echo "TikZ 自检 TIKZ_CHECK=${TIKZ_CHECK:-（不可用，将跳过结构自检）}"
-
-# tikz_vision_check.py 视觉自检（与 drawio_vision_check 同源，接受 PNG）
-# ⛔ 三处查找（对齐 drawio 侧 Step 7.5）：_utils/（后端正常复制的位置）→ $MH_TOOLS_DIR
-#    （后端注入的发布包 tools/ 路径，_utils 复制失败时兜底）→ tools/（开发态相对路径）。
-#    少了 $MH_TOOLS_DIR 时：一旦 _utils/ 未建/复制失败，html 侧会误判脚本缺失而跳过自检。
-TIKZ_VISION=""
-for f in _utils/tikz_vision_check.py "${MH_TOOLS_DIR}/tikz_vision_check.py" tools/tikz_vision_check.py; do
-  [ -n "$f" ] && [ -f "$f" ] && { TIKZ_VISION="$f"; break; }
-done
-echo "TikZ 视觉自检 TIKZ_VISION=${TIKZ_VISION:-（不可用，将跳过）}"
-
-# xelatex（TikZ 编译器；不存在则本机无 TikZ 能力，跳过 TikZ 只出 HTML 图）
-XELATEX=$(command -v xelatex 2>/dev/null)
-echo "TikZ 编译器 XELATEX=${XELATEX:-（不可用，将跳过 TikZ 图）}"
+PYTHON="${VIVID_PYTHON:-python}"
+RES=$($PYTHON -c "import json; print(json.load(open('.vivid/runtime.json', encoding='utf-8'))['runtime_skill'])")
+CAPTURE="$RES/scripts/render_html.py"
+HTMLCHECK="_templates/html_pdf_check.py"
+TPL_DIR="_templates"
+TIKZ_RULES="_utils/tikz_rules.md"
+TIKZ_CHECK="_utils/tikz_check.sh"
+XELATEX=$(command -v xelatex)
 ```
 
 ## ⛔⛔⛔ Output Contract（最高优先级）
@@ -193,13 +135,7 @@ if [ -f LITERATURE_REVIEW.md ] && [ -z "$PLAN_DOC" ]; then
 fi
 
 # 语言判定（comp_apmcm_zh 是中文赛项，先排除）
-if grep -qi 'comp_apmcm_zh' "$PLAN_DOC" CLAUDE.md 2>/dev/null; then
-    FIG_LANG="zh"
-elif grep -qi 'MCM\|ICM\|APMCM\|comp_mcm\|comp_apmcm\|Language.*English\|语言.*English' "$PLAN_DOC" CLAUDE.md 2>/dev/null; then
-    FIG_LANG="en"
-else
-    FIG_LANG="zh"
-fi
+FIG_LANG=$(python _utils/vivid_config.py get language)
 echo "图内文字语言: $FIG_LANG"
 
 echo "=== 规划中的架构/流程图清单 ==="
@@ -278,9 +214,8 @@ SKELETON=$(( (SEED / 29) % 4 ))
 STYLE_FAMILY=2   # ⛔ 默认纯黑白 C：最不"AI感"、最像传统竞赛/数模论文、印刷友好。
 #    ⛔ 关键：默认统一黑白配色，"每个人每道题不一样"改由【布局骨架】承担——LAYOUT 在 4 个精致骨架间轮换
 #       (见文末《路线图/流程图 骨架池》)，配色收敛到黑白反而更稳、更不像 AI。想要彩色的用户可手选。
-# ⛔ 用户手选覆盖（可选，照 FAST_MODE 的 grep 先例）：前端选了 现代/朴素 时，后端会往 CLAUDE.md 注入
-#    `MH_DIAGRAM_STYLE=N`（0=A朴素 1=B现代 2=C纯黑白）。读得到就用它、覆盖默认；读不到就保持默认黑白。
-_FORCED_FAM=$(grep -oE 'MH_DIAGRAM_STYLE=[0-2]' CLAUDE.md 2>/dev/null | head -1 | cut -d= -f2)
+# 用户可在项目配置中选择 diagram_style；未设置时使用该工作流原有版式选择。
+_FORCED_FAM=$(python _utils/vivid_config.py get diagram_style)
 if [ -n "$_FORCED_FAM" ]; then STYLE_FAMILY=$_FORCED_FAM; fi
 case $STYLE_FAMILY in
   0) _FAM_NAME="A 朴素竞赛风";;
@@ -333,23 +268,16 @@ echo "🎨 风格种子 SEED=$SEED  STYLE_FAMILY=$STYLE_FAMILY（$_FAM_NAME）  
 [ -f figures/fig_roadmap.html ] && echo "✅ fig_roadmap.html created" || echo "❌ MISSING"
 ```
 
-### Step 3: 转 PDF（Electron printToPDF，矢量单页无白边）
+### Step 3:
 
-对刚生成的 HTML 转 PDF：
+使用本机 Chrome 导出，保留 HTML 源文件：
 
 ```bash
-# 无公式的图：
-$PYTHON "$CAPTURE" --file figures/fig_roadmap.html --out figures/fig_roadmap.pdf --format pdf 2>&1 | tail -8
-[ -f figures/fig_roadmap.pdf ] && echo "✅ fig_roadmap.pdf 已生成" || echo "❌ PDF 生成失败"
-
-# 含公式的图（节点里写了 \(...\)/\[...\]）：必须加 --render-math，KaTeX 才会渲染公式
-$PYTHON "$CAPTURE" --file figures/fig_flow_q1.html --out figures/fig_flow_q1.pdf --format pdf --render-math 2>&1 | tail -8
-[ -f figures/fig_flow_q1.pdf ] && echo "✅ fig_flow_q1.pdf 已生成" || echo "❌ PDF 生成失败"
+$PYTHON "$CAPTURE" figures/fig_roadmap.html --format both
+# 含 LaTeX 公式时加 --render-math；公式资源不可用会明确报错。
 ```
 
-- `--format pdf`（或 out 以 .pdf 结尾）→ 量内容真实像素、页面设成刚好等于内容 → **单页、无白边、真矢量**（文字可选可搜、无限放大不糊），等效 drawio `--crop`。
-- `--render-math` → 截图前注入 KaTeX 渲染 HTML 里的 `\(...\)`/`\[...\]`/`$$`。**图里有公式就必须加**；没公式不用加（无害但多一步）。素材缺失时自动降级（图仍出、公式不渲染），不阻断。
-- 若 `$CAPTURE` 为空或退出码 2 → Electron 不可用。这是硬依赖，应报告用户"HTML 出图需要 Electron 运行时"，本 skill 无法降级出图。
+渲染依赖或公式资源缺失时解决实际缺失项，不跳过规划图。
 
 ### Step 4: html_pdf_check 质检（⛔ 每张必跑，FAIL 必修）
 
@@ -368,104 +296,13 @@ $PYTHON "$HTMLCHECK" figures/fig_roadmap.pdf
 
 退出码 2（如缺 PDF 解析条件）→ 跳过，不阻塞。
 
-### Step 4.5: 元素级几何自检 + 自修复循环（⛔ 每张必跑，有问题就改到干净）
+### Step 4.5:
 
-html_pdf_check 只看 PDF 结构（单页/矢量/尺寸），**看不出图里文字有没有被裁、有没有越界、两块文字有没有压在一起**——这些是"截图一看就丑、但结构检查过得了"的翻车。这一步用 `$CAPTURE --geom-check` **纯几何测量**（不调大模型、几十毫秒）把它们精确抓出来，然后**你亲自读 HTML 改 CSS 修好**。这是本 skill 的"截图识别→发现问题→自修复"闭环。
+运行 `$PYTHON "$CAPTURE" --geom-check figures/fig_name.html`，含公式时加 `--render-math`。保留原几何探针：检查文字溢出、越出画布、同级文字重叠和声明式对齐。0 表示未发现问题，1 表示发现问题，2 表示无法检查。对真实问题调整 CSS、位置或尺寸，重新导出并复查。修复轮次见检查与修复；不要为了通过检查删除真实信息。
 
-**几何自检测四类问题（都在 `.fig` 内、渲染公式之后测，所以准）：**
-| 类型 | 含义 | 常见成因 |
-|---|---|---|
-| **文字溢出被裁** | 元素实际内容宽/高 > 盒子宽/高 | 节点 `width`/`min-width` 太窄、文字太长、`overflow:hidden` 切掉 |
-| **越出 .fig 边界** | 元素跑到画布外（会被论文页面裁掉） | 误用 `position:absolute` 定坐标、`margin`/`transform` 把元素推出去 |
-| **文字块重叠** | 两个同级文字块几何相交、内容互相压盖 | absolute 定位撞车、负 margin、回边/侧栏占位算错（q3 回环最易犯） |
-| **对齐偏差**（声明式） | 打了 `data-mh-col`/`data-mh-row` 的同组元素中轴没对齐（极差 >4px） | 手写不同 `width`、`margin` 挪位、没用 grid 锁列/行、竖箭头没接节点中轴 |
+### Step 5:
 
-> ⛔ **对齐偏差只对打了 `data-mh-col="k"`/`data-mh-row="k"` 标记的元素生效**（见 G.5 第 4 条）：主干/纵列的节点+竖箭头打 `data-mh-col`、同行节点打 `data-mh-row`，工具就会验证它们中轴是否成一条线。没打标记的图不触发这项（与旧行为一致）。**所以画主干/多列/多行结构时务必打标记**，让"差几像素的错位"这种 vision 抓不住、肉眼却嫌丑的偏差被确定性揪出。
-
-**每出一张 PDF（Step 3）、过了 html_pdf_check（Step 4）后，立即跑几何自检：**
-
-```bash
-# 无公式的图：
-$PYTHON "$CAPTURE" --geom-check figures/fig_roadmap.html
-# 含公式的图：必须加 --render-math（公式渲染会改变盒尺寸，不加会误报/漏报）
-$PYTHON "$CAPTURE" --geom-check figures/fig_flow_q1.html --render-math
-# 退出码：0=干净（无溢出/越界/重叠） 1=有几何问题（必修） 2=无法检查（Electron 不可用，跳过不阻塞）
-```
-
-**⛔ 若退出码 1（有问题），进入自修复循环（最多 3 轮，每轮"检→读→改→重出→重检"）：**
-
-1. **读报告**：工具会逐条列出「哪块文字溢出/越界/重叠、越了多少 px / 交叠多大面积」。**照着定位问题元素**（报告里印了每块前 20 字，对得上 HTML 里的节点）。
-2. **用 Read 读这张 `figures/fig_xxx.html`**，按问题类型针对性改 CSS：
-   - **文字溢出被裁** → 加大该节点 `min-width`/`width`，或缩短文字/移一部分到副标题 `.sub`，或调小 `font-size`（12px→11px），或去掉不该有的 `overflow:hidden`+`white-space:nowrap`（让文字正常换行）。
-   - **越出 .fig 边界** → ⛔ 十有八九是**误用了 `position:absolute` 定坐标**（违反 0 节硬约束第 3 条）。改回 **flex/grid 自动布局**，让元素待在文档流里；留白靠 `padding`/`gap` 不靠绝对偏移。回边/侧栏这类确需叠加的，用相对定位并给父容器留足空间。
-   - **文字块重叠** → 同上，绝大多数是 absolute 或负 margin 造成。改成 flex/grid 顺排；两块本就该错开的（如循环回边标签），给它独立的 flex 轨道或加 `gap`，别让它压到主链。**（这正是 q3 循环回环反复踩的坑——回边占了主链宽度就会重叠/错位。）**
-   - **对齐偏差** → 报告会印「哪个 `data-mh-col`/`row` 组、错开多少 px、成员是谁」。⛔ **十有八九是没把这一列/行放进同一个 grid**，或给节点写了不同 `width`、用 `margin` 手动挪位。改法：把这组元素装进 `display:grid`（列用 `grid-template-columns:<定宽或1fr>` + `justify-items:center`，行用 `grid-auto-flow:column`+`align-items:center`），节点 `width:auto;min-width:0` 交给 grid 拉齐，竖箭头放进同列容器居中——**别靠手写 width/margin 对齐**（见 G.5）。
-3. **改完重出 PDF**（Step 3 命令）→ 重跑 html_pdf_check（Step 4）→ 再跑本步几何自检。
-4. 循环直到退出码 0，或 3 轮用完（用完仍有问题**不阻塞**，但要在心里记下这张需人工看一眼）。
-
-**⛔ 与 vision 自检（Step 5）的分工**：几何自检是**精确的、必修的**（纯数学，说重叠就是真重叠）；vision 是**模糊的、不阻塞的**（看配色/审美/挤不挤）。先过几何（硬门槛），再走 vision（加分项）。**FAST_MODE=1 时几何自检照跑**（它快、且能挡真翻车），只跳 vision。
-
-- 若 `$CAPTURE` 为空或退出码 2 → Electron 不可用，几何自检跳过（和出 PDF 同一依赖，出得了 PDF 就查得了几何）。
-
-### Step 5: 视觉自检（vision LLM，复用 drawio_vision_check，⛔ 不阻塞）
-
-html_pdf_check 只看 PDF 结构，看不出渲染后的视觉效果（文字挤、配色刺眼等）。这一步用 vision LLM 真正"看图"。**复用** `drawio_vision_check.py`（它接受 PDF/PNG，与画图引擎无关）。**FAST_MODE=1 时跳过本步。**
-
-⛔ **执行原则**：vision 不可用（`$VISION` 为空 或退出码 2）就跳过，**绝不阻塞**；这是加分项不是硬门槛，3 轮仍未解决也继续。
-
-```bash
-# ⛔ 块内自检 FAST_MODE（本 skill bash 块间不共享变量，须就地 detect，否则快速模式跳不掉 vision）。
-FAST_MODE=0; grep -q 'MH_FAST_MODE=1' CLAUDE.md 2>/dev/null && FAST_MODE=1
-# ⛔ 用户在高级选项【关闭】了流程图/TikZ 视觉质检 → 跳过 vision（复用 FAST_MODE 的跳过路径；
-#    免费的 html_pdf_check/几何自检/tikz_check 不在此 if 内，照常跑，不受影响）。
-grep -q 'MH_SKIP_DIAGRAM_VISION=1' CLAUDE.md 2>/dev/null && FAST_MODE=1
-mkdir -p _tmp
-# ⛔ 无条件清空三笔记账（防断线重跑读到上一轮残留）；下面按需 append，Step 7 最终门结算：
-#   passed=真跑了vision且通过(执行凭证) / unresolved=审了3轮没修好(硬拦) / skipped=环境原因没审成(警告)。
-#   ⛔ passed 是「执行证明」：Step 7 会核对每张该检的图都必须在三者之一里有记录，否则判定
-#      「视觉自检被静默跳过」并 FAIL——杜绝"没跑却当跑了"（HTML 与 TikZ 图都适用）。
-rm -f _tmp/vision_unresolved.txt _tmp/vision_skipped.txt _tmp/vision_passed.txt
-if [ "$FAST_MODE" = "1" ]; then
-  echo "⚡ 快速模式：跳过 HTML vision 视觉自检（省 API）；Step 7 的执行凭证断言仅非快速模式生效，不因此 FAIL。"
-elif [ -z "$VISION" ]; then
-  # ⛔ vision 工具不可用是真实环境限制，不硬拦；但要给每张该检的图写 skipped 留痕，
-  #    让 Step 7 知道"审过了、只是环境不允许"，而不是"静默没跑"。
-  echo "🟥 vision 工具(drawio_vision_check.py)不可用，HTML 流程/架构图未做视觉审查（环境限制，不硬拦）"
-  for pdf in figures/fig_arch*.pdf figures/fig_flow_*.pdf figures/fig_roadmap*.pdf figures/fig_pipeline*.pdf figures/fig_framework*.pdf; do
-    [ -f "$pdf" ] || continue
-    echo "$(basename "$pdf" .pdf) (vision 工具不可用)" >> _tmp/vision_skipped.txt
-  done
-else
-  # ⛔ 只检本 skill 拥有的流程/架构图前缀（fig_arch/fig_flow_/fig_roadmap/fig_pipeline/fig_framework）；
-  #    数据图（fig_q1_* 等）由上一步 paper-figure 自检，不在此扫，免得误检+浪费 vision API。
-  for pdf in figures/fig_arch*.pdf figures/fig_flow_*.pdf figures/fig_roadmap*.pdf figures/fig_pipeline*.pdf figures/fig_framework*.pdf; do
-    [ -f "$pdf" ] || continue
-    bn=$(basename "$pdf" .pdf)
-    for VROUND in 1 2 3; do
-      echo "=== 视觉自检: $bn (round $VROUND) ==="
-      VOUT=$($PYTHON "$VISION" "$pdf" 2>&1); VEXIT=$?
-      echo "$VOUT"
-      if [ "$VEXIT" -eq 0 ]; then echo "✅ $bn 视觉通过"; echo "$bn PASS" >> _tmp/vision_passed.txt; break
-      elif [ "$VEXIT" -eq 2 ]; then echo "⚠ vision 不可用，跳过 $bn（不阻塞）"; echo "$bn (Vision API 不可用/调用失败)" >> _tmp/vision_skipped.txt; break
-      fi
-      # VEXIT=1：有视觉问题
-      if [ "$VROUND" -lt 3 ]; then echo "⛔ $bn 有视觉问题，读 HTML 修复后重出 PDF..."
-      else echo "⚠ $bn 3 轮仍有问题（Step 7 最终门将记账，不静默放行）"; echo "$bn (3轮视觉自检未修好)" >> _tmp/vision_unresolved.txt; fi
-    done
-  done
-fi
-```
-
-**⛔ 当某张图返回 ISSUE（VEXIT=1）时，你必须逐步修复（不是只跑检测脚本）：**
-1. 用 **Read** 读该图的 `figures/fig_xxx.html`。
-2. 按 vision 反馈改（HTML 是相对布局，改法比 drawio 简单）：
-   - "文字溢出/截断" → 加大对应节点 `min-width` 或缩短文字（CSS 已 wrap，一般是 width 太窄）。
-   - "配色刺眼/杂乱" → 按《设计规范 B 节》从 `H0` 重新推导色板，饱和度 ≤55%、有意义色 ≤4，别自造高饱和色。
-   - "布局松散/大片留白" → 内容居中的类已处理；检查是否漏填内容或容器过宽。
-   - ⛔ **"节点不对齐/大小参差/边缘不齐/箭头歪接/间距忽大忽小"（最常见的"丑"）** → 按 D.1 ④ 硬纪律改：并列节点改用 `grid`+`1fr`（或 flex `flex:1`+`align-items:stretch`）强制等宽等高；多行多列用 `display:grid` 让行列自动对齐；箭头 `align-items:center` 接中轴；`gap`/`padding`/`border-radius` 全篇统一。**别手写不同 width、别用 margin 挪位置**——那正是参差的根源。
-   - "出现 HTML 源码/黑背景" → 检查标签是否闭合、`body{margin:0}`。
-3. **重新出 PDF**（Step 3 命令），再跑 html_pdf_check（Step 4），再回本步验证。
-4. 重复直到通过或 3 轮用完（用完仍不过也继续，不阻塞）。
+按 [检查与修复](../../review-policy.md) 逐张打开实际图件，完整检查文字、图例、色条、遮挡、裁切、数据表达和模板保真；先汇总问题再集中修复，修复后复查，轮次与停止条件只由该文件规定。静态检查不能代替实际看图。
 
 ### Step 5.5: 生成 TikZ 几何示意图（⛔ 仅当 Step 1 判定 NEED_TIKZ=1；否则整步跳过）
 
@@ -567,93 +404,9 @@ done
 
 ⛔ **失败兜底**：HTML 引擎**没有 drawio 可退**。若某公式图 3 轮编不出，**大幅精简**（去掉次要标注、拆成两张更简单的图、公式改行内文字描述）再试；仍不行则**保留其余已成功产物**，在 latex_includes.tex 该图位置写一行 `% TODO: tikz_xxx 编译失败，需人工补` 注释，**不阻塞整步结束**。
 
-### Step 5.6: TikZ 视觉自检（vision LLM，⛔ 不阻塞；FAST_MODE=1 跳过）
+### Step 5.6:
 
-结构自检看不出渲染后的视觉挤叠。这一步用 `tikz_vision_check.py`（接受 PNG）真正"看图"。**只检 TikZ 图**（同名 .tex 含 `\begin{tikzpicture}` 的 PDF），HTML 流程图前缀（`fig_arch/fig_flow_/fig_roadmap/fig_pipeline/fig_framework`）已在 Step 5 检过，这里排除。
-
-```bash
-# ⛔ 块内自检 FAST_MODE（本 skill bash 块间不共享变量，须就地 detect，否则快速模式跳不掉 vision）。
-FAST_MODE=0; grep -q 'MH_FAST_MODE=1' CLAUDE.md 2>/dev/null && FAST_MODE=1
-# ⛔ 用户在高级选项【关闭】了流程图/TikZ 视觉质检 → 跳过 vision（复用 FAST_MODE 的跳过路径；
-#    免费的 html_pdf_check/几何自检/tikz_check 不在此 if 内，照常跑，不受影响）。
-grep -q 'MH_SKIP_DIAGRAM_VISION=1' CLAUDE.md 2>/dev/null && FAST_MODE=1
-# ⛔ 门控改为「看实际产物」而非「看规划标志 NEED_TIKZ」：规划措辞没命中「几何示意/受力
-#    分解/光路」等关键词、但实际生成了 TikZ 图（如 tikz_ballistic_motion）时，旧逻辑
-#    NEED_TIKZ=0 会整段跳过 → 明明有图却不检、遮挡/越界问题漏网。改为先扫产物收集，
-#    收集到才检、收集为空才真跳过（对齐 drawio 侧 Step 7.5 的稳健口径）。NEED_TIKZ 仅
-#    在 Step 5.5 控制「要不要生成」，此处自检一律以实际产物为准，两者解耦。
-if [ "$FAST_MODE" = "1" ]; then
-  echo "⚡ 快速模式：跳过 TikZ vision 视觉自检修复循环（省 API）；结构/几何自检仍由最终门把关。"
-else
-  mkdir -p _tmp
-  # 多页 tikz_diagrams.pdf 先拆单页便于逐张检
-  command -v pdfseparate >/dev/null 2>&1 && [ -f figures/tikz_diagrams.pdf ] && \
-    pdfseparate figures/tikz_diagrams.pdf figures/tikz_diagrams_%d.pdf 2>/dev/null
-  # 先收集所有 TikZ 图 PDF（tikz_ 前缀 或 同名 .tex 含 tikzpicture）；排除 HTML 流程图前缀
-  TIKZ_LIST=""
-  for pdf in figures/*.pdf; do
-    [ -f "$pdf" ] || continue
-    bn=$(basename "$pdf" .pdf)
-    case "$bn" in fig_arch*|fig_flow_*|fig_roadmap*|fig_pipeline*|fig_framework*) continue ;; esac
-    is_tikz=0
-    [ "${bn#tikz_}" != "$bn" ] && is_tikz=1
-    # ⛔ 收集判断只认「同名 .tex 含 tikzpicture」，绝不回退到合集 tikz_diagrams.tex：否则所有
-    #    无同名 .tex 的 matplotlib 数据图（fig_velocity.pdf 等）都会回退命中合集而被误判成
-    #    TikZ 图 → 拿去编 xelatex、当 TikZ 做视觉自检。tikz_diagrams.pdf 拆出的单页名为
-    #    tikz_diagrams_N.pdf 带 tikz_ 前缀，已被上一行前缀判断覆盖，无需回退（对齐 drawio 侧 7.5）。
-    [ -f "figures/${bn}.tex" ] && grep -q '\\begin{tikzpicture}' "figures/${bn}.tex" 2>/dev/null && is_tikz=1
-    [ "$is_tikz" = "1" ] && TIKZ_LIST="$TIKZ_LIST $pdf"
-  done
-  if [ -z "$TIKZ_LIST" ]; then
-    echo "ℹ 未发现 TikZ 图产物（figures/*.pdf 无 tikz_ 前缀、也无同名 .tex 含 tikzpicture），无需 TikZ 视觉自检"
-  elif [ -z "$TIKZ_VISION" ]; then
-    echo "🟥🟥🟥 发现 TikZ 图但找不到 tikz_vision_check.py（_utils/ 与 tools/ 均无）——【这些图未做视觉审查，遮挡/越界类问题可能漏网】"
-    for pdf in $TIKZ_LIST; do echo "$(basename "$pdf" .pdf) (找不到 tikz_vision_check.py)" >> _tmp/vision_skipped.txt; done
-  else
-    for pdf in $TIKZ_LIST; do
-      bn=$(basename "$pdf" .pdf)
-      tex="figures/${bn}.tex"; [ -f "$tex" ] || tex="figures/tikz_diagrams.tex"
-      # ⛔ 硬刹车：TikZ vision 最多 2 轮。vision 对几何图的主观意见（四角空白/浮空标签/贴线）
-      #    永远挑得出，多轮只会震荡烧额度。2 轮后用当前最新 PDF 定稿、记 unresolved、往下走。
-      for VROUND in 1 2; do
-      echo "=== TikZ 视觉自检: $bn (round $VROUND / 上限 2) ==="
-      PNG_OK=0
-      # ⛔ 首选 PyMuPDF(fitz)：纯 wheel、自带渲染、不依赖 poppler，打包 runtime 必有；
-      #    pdftoppm 依赖 poppler，打包环境常缺 → 曾导致 TikZ 视觉自检每次静默跳过。
-      $PYTHON -c "
-import fitz
-d=fitz.open('$pdf'); d[0].get_pixmap(matrix=fitz.Matrix(200/72,200/72)).save('_tmp/${bn}_v.png')
-" 2>/dev/null && [ -f "_tmp/${bn}_v.png" ] && PNG_OK=1
-      if [ "$PNG_OK" = "0" ] && command -v pdftoppm >/dev/null 2>&1; then
-        pdftoppm -png -r 200 -singlefile "$pdf" "_tmp/${bn}_v" && PNG_OK=1
-      fi
-      # 第三级兜底 pdf2image（对齐 drawio 侧 Step 7.5，多一条转换路径）
-      if [ "$PNG_OK" = "0" ] && $PYTHON -c "from pdf2image import convert_from_path" 2>/dev/null; then
-        $PYTHON -c "
-from pdf2image import convert_from_path
-convert_from_path('$pdf', dpi=200, first_page=1, last_page=1)[0].save('_tmp/${bn}_v.png','PNG')
-" 2>/dev/null && [ -f "_tmp/${bn}_v.png" ] && PNG_OK=1
-      fi
-      [ "$PNG_OK" = "0" ] && { echo "🟥🟥🟥 $bn: PyMuPDF/pdftoppm/pdf2image 均不可用，无法转 PNG——【本图未做视觉审查，遮挡类问题可能漏网】"; echo "$bn (PDF→PNG 转换失败，未审成)" >> _tmp/vision_skipped.txt; break; }
-      VOUT=$($PYTHON "$TIKZ_VISION" "_tmp/${bn}_v.png" 2>&1); VEXIT=$?
-      echo "$VOUT"
-      if [ "$VEXIT" -eq 0 ]; then echo "✅ $bn 视觉通过"; echo "$bn PASS" >> _tmp/vision_passed.txt; break
-      elif [ "$VEXIT" -eq 2 ]; then echo "⚠ vision 不可用，跳过 $bn（不阻塞）"; echo "$bn (Vision API 不可用/调用失败)" >> _tmp/vision_skipped.txt; break
-      fi
-      # VEXIT=1：读 $tex 按反馈改坐标/间距/scale/颜色 → 重编 xelatex → 再检
-      if [ "$VROUND" -lt 2 ]; then
-        echo "⛔ $bn 有视觉问题：读 $tex 修复（scale 不够加 scale=2.0；标注间距<0.5cm 拉到 0.8cm+；rotate=90 长文字留 y 跨度 1.5cm+）后重编。⛔ 只修【客观硬伤】（文字截断/节点重叠/公式撕断/越界）；不要为「四角空白/浮空标签/贴线」等主观意见反复挪位——那会无限震荡"
-        "$XELATEX" -interaction=nonstopmode -output-directory=figures "$tex" 2>&1 | tail -6
-        command -v pdfseparate >/dev/null 2>&1 && [ -f figures/tikz_diagrams.pdf ] && \
-          pdfseparate figures/tikz_diagrams.pdf figures/tikz_diagrams_%d.pdf 2>/dev/null
-      else echo "⚠ $bn 已修 2 轮仍有 ISSUE → 用当前最新 PDF 定稿，记 unresolved 不再迭代（Step 7 最终门记账，不静默放行）"; echo "$bn (TikZ 2轮视觉自检未完全修好，已用最新PDF定稿)" >> _tmp/vision_unresolved.txt; fi
-      done
-    done
-  fi
-fi
-```
-
-**⛔ 当某张返回 ISSUE（VEXIT=1）时，逐步修复**：用 Read 读对应 `.tex`，按反馈调坐标/间距/节点宽度/scale/颜色，用 Edit 写回，重编 xelatex，再检——"检→改→编→再检"。**⛔ 最多 2 轮，硬上限**：第 2 轮后无论 vision 是否仍报 ISSUE，一律**用当前最新 PDF 定稿**、记入 `_tmp/vision_unresolved.txt`、继续下一张/下一步，**绝不为主观意见（四角空白、浮空标签、贴线、布局不紧凑）第 3 轮起反复挪标签**——那只会无限震荡、空烧额度。只有【客观硬伤】（文字截断/节点重叠/公式撕断/内容越界）才值得在 2 轮内修。
+按 [检查与修复](../../review-policy.md) 逐张打开实际图件，完整检查文字、图例、色条、遮挡、裁切、数据表达和模板保真；先汇总问题再集中修复，修复后复查，轮次与停止条件只由该文件规定。静态检查不能代替实际看图。
 
 ### Step 6: 更新 latex_includes.tex（⛔ 每张都要有 include 块）
 
@@ -744,163 +497,11 @@ DUPS=$(grep -oh '\\label{[^}]*}' figures/latex_includes.tex 2>/dev/null | sort |
 ```
 有 ❌ 立即修复（追加缺失 include / 改重复 label）。TikZ 的 ❌ 尤其不能放过。
 
-### Step 7: 最终质量门（⛔ MUST PASS，不允许带 ❌ 结束）
+### Step 7:
 
-```bash
-echo "=========================================="
-echo "  HTML FIGURE QUALITY GATE"
-echo "=========================================="
-GATE_FAIL=0
-HTML_COUNT=$(ls figures/fig_*.html 2>/dev/null | wc -l)
-PDF_OK=0
-for hf in figures/fig_*.html; do
-    [ -f "$hf" ] || continue
-    bn=$(basename "$hf" .html)
-    if [ -f "figures/${bn}.pdf" ]; then
-        # 每张 PDF 过一遍 html_pdf_check（FAIL 计入门禁）
-        $PYTHON "$HTMLCHECK" "figures/${bn}.pdf" >/tmp/_hc.txt 2>&1
-        [ $? -eq 1 ] && { echo "❌ ${bn}.pdf html_pdf_check FAIL"; cat /tmp/_hc.txt | grep FAIL; GATE_FAIL=$((GATE_FAIL+1)); } || PDF_OK=$((PDF_OK+1))
-        # 元素级几何自检（溢出/越界/重叠；--render-math 无公式时无害）。退出码1=有问题计入门禁，2=无法检查跳过
-        if [ -n "$CAPTURE" ]; then
-            $PYTHON "$CAPTURE" --geom-check "figures/${bn}.html" --render-math >/tmp/_gc.txt 2>&1
-            GC=$?
-            [ "$GC" -eq 1 ] && { echo "❌ ${bn} 几何自检有问题（溢出/越界/重叠）"; grep -E '溢出|越出|重叠|共 ' /tmp/_gc.txt; GATE_FAIL=$((GATE_FAIL+1)); }
-        fi
-    else
-        echo "❌ ${bn}.html 无对应 PDF"; GATE_FAIL=$((GATE_FAIL+1))
-    fi
-done
-rm -f /tmp/_hc.txt /tmp/_gc.txt
-[ "$HTML_COUNT" -gt 0 ] && echo "✅ HTML=$HTML_COUNT, PDF 过检=$PDF_OK" || echo "⚠ 无 HTML 图（若规划要求则为 FAIL）"
+对照 `router-contract.md` 的分类和 FIGURE_MANIFEST 核对可编辑源文件、预期导出、单页 PDF、HTML 几何检查和实际看图结果。有论文交付时核对引用片段；无需为单独出图生成论文。TikZ 单独归入 TIKZ，HTML 归入可选格式，不能按旧应用的标题匹配规则混合归类。
 
-# TikZ 公式图（仅当规划要求；NEED_TIKZ=1）——⛔ 逐个核对 manifest 每个 tikz_<name> 都有同名 PDF
-if [ "${NEED_TIKZ:-0}" = "1" ]; then
-    # ⛔ 就地重解析 PLAN_DOC（块间变量不共享，此块 Step 1 的 PLAN_DOC 为空，必须重定位）
-    _PLAN_DOC=""
-    for f in PROBLEM_ANALYSIS.md PROPOSAL.md PAPER_PLAN.md; do [ -f "$f" ] && { _PLAN_DOC="$f"; break; }; done
-    # 重新提取 manifest 的 TIKZ 硬合同清单（与 Step 5.5 同口径）
-    _TIKZ_NAMES=$(awk '/BEGIN FIGURE_MANIFEST/,/END FIGURE_MANIFEST/' "$_PLAN_DOC" 2>/dev/null | grep -oE 'tikz_[a-zA-Z0-9_]+' | sort -u)
-    [ -z "$_TIKZ_NAMES" ] && _TIKZ_NAMES=$(grep -oE 'tikz_[a-zA-Z0-9_]+' "$_PLAN_DOC" 2>/dev/null | sort -u)
-    if [ -z "$XELATEX" ]; then
-        echo "⚠ 规划需 TikZ 图但本机无 xelatex — 已在 latex_includes 留 TODO，不计 FAIL（环境限制）"
-    elif [ -z "$_TIKZ_NAMES" ]; then
-        echo "  (NEED_TIKZ=1 但 manifest 未列出具体 tikz_ 名，跳过逐项核对)"
-    else
-        # ⛔ 逐个硬核对：manifest 列了 tikz_<name> 就必须有 figures/<name>.pdf，缺一个 FAIL 一个
-        _tikz_miss=0
-        for tname in $_TIKZ_NAMES; do
-            if [ -f "figures/${tname}.pdf" ]; then
-                echo "✅ TikZ 产物: ${tname}.pdf"
-                # 有源码则结构自检 CRITICAL 计入门禁
-                if [ -n "$TIKZ_CHECK" ] && [ -f "figures/${tname}.tex" ]; then
-                    bash "$TIKZ_CHECK" "figures/${tname}.tex" >/dev/null 2>&1
-                    [ $? -gt 0 ] && { echo "❌ ${tname} tikz_check CRITICAL"; GATE_FAIL=$((GATE_FAIL+1)); }
-                fi
-            else
-                echo "❌ 硬合同缺口: manifest 规划了 $tname 但无 figures/${tname}.pdf（不许用数据图替代/跳过，必须用 TikZ 产出）"
-                _tikz_miss=$((_tikz_miss+1))
-            fi
-        done
-        [ "$_tikz_miss" -gt 0 ] && GATE_FAIL=$((GATE_FAIL+_tikz_miss))
-    fi
-fi
-
-# ⛔ 结算 Step 5 / Step 5.6 视觉自检两笔账（元素级几何自检抓不到的渲染遮挡/参差靠这里守门）：
-#   - unresolved：审了、3 轮没修好 → 计入 GATE_FAIL，硬拦（与 drawio 引擎对称，默认引擎不再静默放行）
-#   - skipped：环境原因（无 vision API / PDF→PNG 失败）根本没审 → 醒目警告 + 提示，不硬拦
-if [ -s _tmp/vision_unresolved.txt ]; then
-    _n_unres=$(wc -l < _tmp/vision_unresolved.txt 2>/dev/null); _n_unres=${_n_unres:-0}
-    echo "❌ 视觉审查未通过 $_n_unres 张（3 轮没修好，带遮挡/参差/瑕疵）："
-    sed 's/^/     - /' _tmp/vision_unresolved.txt
-    GATE_FAIL=$((GATE_FAIL+_n_unres))
-fi
-if [ -s _tmp/vision_skipped.txt ]; then
-    _n_skip=$(wc -l < _tmp/vision_skipped.txt 2>/dev/null); _n_skip=${_n_skip:-0}
-    echo "🟥🟥🟥 警告：$_n_skip 张图【未做视觉审查】（仅过了结构/几何检查，遮挡类问题可能漏网）："
-    sed 's/^/     - /' _tmp/vision_skipped.txt
-    echo "     → 想让这些图被真正审查：确认已配 vision API（editor_ai/reviewer），并确保工作区有 PyMuPDF 或 pdftoppm。"
-fi
-
-# ⛔⛔ 执行凭证断言（防"没跑却当跑了"——本次会话暴露的静默跳过就靠这里拦）：
-#   HTML 流程/架构图 + TikZ 图，每一张【该检的图】都必须在 passed/unresolved/skipped 三笔账里
-#   有一条裁定记录。图在产物里、却三笔账都查无此名 → 说明视觉自检被静默跳过（既没审也没记）
-#   → 计入 GATE_FAIL 硬拦。⛔ 仅非快速模式生效（FAST_MODE=1 是用户主动省 API，不苛求 vision 记录）。
-_FM=0; grep -q 'MH_FAST_MODE=1' CLAUDE.md 2>/dev/null && _FM=1
-# ⛔ 用户关闭了流程图/TikZ 视觉质检时，同样不苛求 vision 记录（否则关了 vision 反而因缺记录 GATE_FAIL 崩）。
-grep -q 'MH_SKIP_DIAGRAM_VISION=1' CLAUDE.md 2>/dev/null && _FM=1
-if [ "$_FM" != "1" ]; then
-    _no_verdict=0
-    for pdf in figures/fig_arch*.pdf figures/fig_flow_*.pdf figures/fig_roadmap*.pdf figures/fig_pipeline*.pdf figures/fig_framework*.pdf figures/tikz_*.pdf; do
-        [ -f "$pdf" ] || continue
-        _vb=$(basename "$pdf" .pdf)
-        # tikz_diagrams.pdf 合集本身不算（拆页 tikz_diagrams_N 才是被检对象），跳过避免误判
-        [ "$_vb" = "tikz_diagrams" ] && continue
-        if grep -q "^${_vb} \|^${_vb}(\|^${_vb} PASS\|^${_vb} " _tmp/vision_passed.txt _tmp/vision_unresolved.txt _tmp/vision_skipped.txt 2>/dev/null; then
-            :  # 有裁定记录（PASS/没修好/环境跳过其一），算审过
-        else
-            echo "❌ 执行凭证缺失：$_vb 在产物里但三笔视觉账都无记录 —— 视觉自检疑被静默跳过，必须真跑 Step 5/5.6 vision 再复核（不许用推理/手算顶包）"
-            _no_verdict=$((_no_verdict+1))
-        fi
-    done
-    [ "$_no_verdict" -gt 0 ] && GATE_FAIL=$((GATE_FAIL+_no_verdict)) || echo "✅ 视觉自检执行凭证齐全（每张 HTML/TikZ 图都有 PASS/未修好/环境跳过 裁定）"
-fi
-
-# latex_includes.tex 含本 skill 图的 include（HTML + TikZ）
-if [ -s figures/latex_includes.tex ]; then
-    N=$(grep -c 'fig_roadmap\|fig_flow\|fig_arch\|fig_pipeline\|fig_framework\|tikz_' figures/latex_includes.tex 2>/dev/null || echo 0)
-    [ "$N" -gt 0 ] && echo "✅ latex_includes.tex 含 $N 条本 skill 图" || { echo "❌ latex_includes.tex 无本 skill 图 include"; GATE_FAIL=$((GATE_FAIL+1)); }
-    # 有 TikZ PDF 时逐个核对 include（防漏）
-    for tpdf in figures/tikz_diagrams.pdf figures/tikz_diagrams_*.pdf figures/tikz_*.pdf; do
-        [ -f "$tpdf" ] || continue
-        grep -q "$(basename $tpdf)" figures/latex_includes.tex 2>/dev/null || { echo "❌ TikZ $(basename $tpdf) 无 include"; GATE_FAIL=$((GATE_FAIL+1)); }
-    done
-else
-    echo "❌ latex_includes.tex 缺失"; GATE_FAIL=$((GATE_FAIL+1))
-fi
-
-# 无损坏小 PDF（HTML + TikZ）
-for pdf in figures/fig_*.pdf figures/tikz_*.pdf; do
-    [ -f "$pdf" ] || continue
-    sz=$(wc -c < "$pdf")
-    [ "$sz" -lt 3000 ] && { echo "❌ $(basename $pdf) 仅 $sz 字节，疑损坏"; GATE_FAIL=$((GATE_FAIL+1)); }
-done
-
-echo ""
-[ "$GATE_FAIL" -eq 0 ] && echo "✅ ALL PASSED" || echo "❌ $GATE_FAIL FAILURES — 逐个修复后重跑本门禁"
-```
-
-**⛔ 若 GATE_FAIL > 0**：逐个修复每个 ❌（重生成 HTML→重出 PDF→重检，或重编 TikZ，或追加 latex_includes），重跑门禁，直到 GATE_FAIL=0。若某张 HTML 图 html_pdf_check 反复多页，最后手段是拆图或大幅精简内容；若某张 TikZ 3 轮编不出，大幅精简后仍不行才留 TODO（环境限制不计 FAIL）。
-
-**⛔ 全通过后输出最终 CHECKLIST 确认：**
-```
-HTML PLAN CHECKLIST (FINAL):
-[✅] 1. fig_roadmap  — figures/fig_roadmap.pdf (XX KB) — html_pdf_check PASS
-[✅] 2. fig_flow_q1  — figures/fig_flow_q1.pdf (XX KB) — html_pdf_check PASS
-[✅] 3. tikz_model   — figures/tikz_diagrams.pdf (XX KB) — 编译+自检 PASS（仅 NEED_TIKZ=1）
-[✅] latex_includes.tex — 含 N 条本 skill 图 include
-ALL COMPLETE — paper-figure-html step finished successfully
-```
-
-## FIGURE_MANIFEST（后端按此对账图数量）
-
-规划步骤（paper-plan 等）在规划文档里维护 `<!-- BEGIN FIGURE_MANIFEST -->` 区块，本 skill 据此对账。章节标题格式与 drawio 版保持一致，只把 "DrawIO" 字样改成 "HTML"。后端按**粗体章节标题里的关键词**归类（`html` 或 `drawio` 都归到本 skill/-drawio 这一类，两者互换），不看文件名前缀，所以 `fig_data_pipeline` 这类"关键词在中间"的名字也不会漏。
-
-⛔ **几何图（TikZ）的 manifest 归属**：HTML 引擎下 TikZ 也由**本 skill** 产出，所以 TikZ 图名要放进**含 "HTML" 字样的章节**（或单独写一个标题里带 "HTML/TikZ" 的章节），这样后端才把它归到本 skill 的对账通道（后端第一优先匹配标题里的 `html`/`drawio` 关键词）。⛔ **不要**沿用 drawio 版把 TikZ 单列成 `**TikZ 图（paper-figure 产出）：**`——那个标题会被后端归到 `paper-figure`（数据图）通道，导致本 skill 产出的 tikz 图对不上账。
-
-示例 manifest 区块（供规划步骤参考）：
-```
-<!-- BEGIN FIGURE_MANIFEST -->
-**数据图（matplotlib gen_fig_*.py，paper-figure 产出 .png/.pdf）：**
-- fig_data_dist
-- fig_result_compare
-
-**HTML 流程/架构图 + TikZ 公式图（paper-figure-html 产出 .html/.pdf + tikz_*.pdf）：**
-- fig_roadmap
-- fig_flow_q1
-- fig_pipeline
-- tikz_model
-<!-- END FIGURE_MANIFEST -->
-```
+按 [检查与修复](../../review-policy.md) 逐张打开实际图件，完整检查文字、图例、色条、遮挡、裁切、数据表达和模板保真；先汇总问题再集中修复，修复后复查，轮次与停止条件只由该文件规定。静态检查不能代替实际看图。
 
 ## Key Rules（速查）
 

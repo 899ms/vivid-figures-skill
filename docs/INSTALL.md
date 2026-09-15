@@ -72,7 +72,7 @@ Python 请使用这个 Skill 安装目录下的 .venv 环境。
 |---|---|---|
 | 流程图、技术路线图、可编辑框图 | draw.io Desktop | 导出 Draw.io 图件时使用 |
 | 带公式的精确几何图、TikZ 技术图 | TeX Live 或 MiKTeX，含 XeLaTeX 及中文支持 | 终端需能运行 `xelatex` |
-| HTML 图和网页截图 | Chrome 或 Chromium | 未找到时可指定 `CHROME_PATH` 或 `PUPPETEER_EXECUTABLE_PATH` |
+| HTML 图和网页截图 | Chrome 或 Chromium + Python Playwright（已列入依赖） | 未找到时可指定 `CHROME_PATH` 或 `PUPPETEER_EXECUTABLE_PATH` |
 | Mermaid 图 | Node.js 与 Mermaid CLI | 安装命令见下方 |
 | PDF 转图片的备用方式 | Poppler | 已有 PyMuPDF 时通常不需要 |
 | AI 生成的科学场景插图 | 助手提供的图像生成工具，或已配置的图像生成 MCP | 本 Skill 不附送图像生成服务；普通数据图不依赖它 |

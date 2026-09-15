@@ -1,13 +1,6 @@
----
-name: paper-illustration
-description: "Generate publication-quality AI illustrations for academic papers using Codex image generation. Creates architecture diagrams, method illustrations with Codex-supervised iterative refinement loop. Use when user says \"生成图表\", \"画架构图\", \"AI绘图\", \"paper illustration\", \"generate diagram\", or needs visual figures for papers."
-argument-hint: [description-or-method-file]
-allowed-tools: Bash(*), Read, Write, Edit, Grep, Glob, Agent, WebSearch
----
+# Paper Illustration: Multi-Stage 当前助手-Supervised Figure Generation
 
-# Paper Illustration: Multi-Stage Codex-Supervised Figure Generation
-
-Generate publication-quality illustrations using a **multi-stage workflow** with **Codex as the STRICT supervisor/reviewer**.
+Generate publication-quality illustrations using a **multi-stage workflow** with **当前助手 as the STRICT supervisor/reviewer**.
 
 ## Core Design Philosophy
 
@@ -20,34 +13,34 @@ Generate publication-quality illustrations using a **multi-stage workflow** with
 │       │                                                                  │
 │       ▼                                                                  │
 │   ┌─────────────┐                                                        │
-│   │   Codex    │ ◄─── Step 1: Parse request, create initial prompt     │
+│   │   当前助手    │ ◄─── Step 1: Parse request, create initial prompt     │
 │   │  (Planner)  │                                                        │
 │   └──────┬──────┘                                                        │
 │          │                                                               │
 │          ▼                                                               │
 │   ┌─────────────┐                                                        │
-│   │   Codex    │ ◄─── Step 2: Optimize layout description               │
-│   │ (Codex reasoning)│      - Refine component positioning                    │
+│   │   当前助手    │ ◄─── Step 2: Optimize layout description               │
+│   │ (当前助手 reasoning)│      - Refine component positioning                    │
 │   │  Layout     │      - Optimize spacing and grouping                   │
 │   └──────┬──────┘                                                        │
 │          │                                                               │
 │          ▼                                                               │
 │   ┌─────────────┐                                                        │
-│   │   Codex    │ ◄─── Step 3: CVPR/NeurIPS style verification          │
-│   │ (Codex reasoning)│      - Check color palette compliance                  │
+│   │   当前助手    │ ◄─── Step 3: CVPR/NeurIPS style verification          │
+│   │ (当前助手 reasoning)│      - Check color palette compliance                  │
 │   │  Style      │      - Verify arrow and font standards                 │
 │   └──────┬──────┘                                                        │
 │          │                                                               │
 │          ▼                                                               │
 │   ┌─────────────┐                                                        │
-│   │ Codex ImageGen │ ◄─── Step 4: Render final image                       │
-│   │ (Codex-3-  │      - High-quality image generation                   │
-│   │ pro-image)  │      - Internal codename: Codex ImageGen              │
+│   │ 宿主图像生成工具 │ ◄─── Step 4: Render final image                       │
+│   │ (当前助手-3-  │      - High-quality image generation                   │
+│   │ pro-image)  │      - Internal codename: 宿主图像生成工具              │
 │   └──────┬──────┘                                                        │
 │          │                                                               │
 │          ▼                                                               │
 │   ┌─────────────┐                                                        │
-│   │   Codex    │ ◄─── Step 5: STRICT visual review + SCORE (1-10)      │
+│   │   当前助手    │ ◄─── Step 5: STRICT visual review + SCORE (1-10)      │
 │   │  (Reviewer) │      - Verify EVERY arrow direction                    │
 │   │   STRICT!   │      - Verify EVERY block content                      │
 │   └──────┬──────┘      - Verify aesthetics & visual appeal               │
@@ -65,8 +58,8 @@ Generate publication-quality illustrations using a **multi-stage workflow** with
 
 ## Constants
 
-- **IMAGE_TOOL = Codex built-in `image_gen`** — high-quality image rendering
-- **REASONING = Codex** — layout optimization, style verification, and visual review
+- **IMAGE_TOOL = 当前助手 built-in `image_gen`** — high-quality image rendering
+- **REASONING = 当前助手** — layout optimization, style verification, and visual review
 - **MAX_ITERATIONS = 5** — Maximum refinement rounds
 - **TARGET_SCORE = 9** — Minimum acceptable score (1-10) — RAISED FOR QUALITY
 - **OUTPUT_DIR = `figures/ai_generated/`** — Output directory
@@ -157,7 +150,7 @@ Generate publication-quality illustrations using a **multi-stage workflow** with
 
 ### Step 0: Pre-flight Check
 
-The built-in Codex ImageGen tool is the required renderer. It requires no API key and must be used directly rather than through an HTTP endpoint or one-off SDK script.
+The built-in 宿主图像生成工具 tool is the required renderer. It requires no API key and must be used directly rather than through an HTTP endpoint or one-off SDK script.
 
 Create the output directory before planning:
 
@@ -165,21 +158,21 @@ Create the output directory before planning:
 mkdir -p figures/ai-illustration
 ```
 
-For a project-bound illustration, the selected generated image must be copied from the Codex generated-images location into `figures/ai-illustration/`. Never leave the only project copy in the generated-images cache.
+For a project-bound illustration, the selected generated image must be copied from the 当前助手 generated-images location into `figures/ai-illustration/`. Never leave the only project copy in the generated-images cache.
 
-### Step 1: Codex Plans the Figure (YOU ARE HERE)
+### Step 1: 当前助手 Plans the Figure (YOU ARE HERE)
 
-**CRITICAL: Codex must first analyze the user's request and create a detailed prompt.**
+**CRITICAL: 当前助手 must first analyze the user's request and create a detailed prompt.**
 
-Parse the input: **$ARGUMENTS**
+Parse the input: 用户提供的数据与绘图要求
 
-Codex's task:
+当前助手's task:
 1. Understand what figure the user wants
 2. Identify all components, connections, data flow
-3. Create a **detailed, structured prompt** for Codex
+3. Create a **detailed, structured prompt** for 当前助手
 4. Include style requirements AND visual appeal requirements
 
-**Prompt Template for Codex to generate:**
+**Prompt Template for 当前助手 to generate:**
 
 ```
 Create a PROFESSIONAL, VISUALLY APPEALING publication-quality academic diagram following CVPR/ICLR/NeurIPS standards.
@@ -262,9 +255,9 @@ VERIFY: Each arrow must point to the CORRECT target!
 [Any specific requirements from user]
 ```
 
-### Step 2: Codex Layout Optimization
+### Step 2: 当前助手 Layout Optimization
 
-Codex performs the layout-optimization pass itself. Using the initial prompt from Step 1, produce `figures/ai-illustration/layout_description.txt` with:
+当前助手 performs the layout-optimization pass itself. Using the initial prompt from Step 1, produce `figures/ai-illustration/layout_description.txt` with:
 
 - exact component positions and relative sizes;
 - grouping, alignment, whitespace, and visual hierarchy;
@@ -274,13 +267,13 @@ Codex performs the layout-optimization pass itself. Using the initial prompt fro
 
 Do not remove components or weaken the scientific logic while optimizing the layout.
 
-### Step 3: Codex Academic Style Verification
+### Step 3: 当前助手 Academic Style Verification
 
-Codex audits the optimized layout against every CVPR/ICLR/NeurIPS visual rule above. Write `figures/ai-illustration/style_spec.txt` containing the approved palette, typography, border and arrow treatments, background, emphasis hierarchy, and explicit prohibitions. Resolve style conflicts before rendering; do not merely list them.
+当前助手 audits the optimized layout against every CVPR/ICLR/NeurIPS visual rule above. Write `figures/ai-illustration/style_spec.txt` containing the approved palette, typography, border and arrow treatments, background, emphasis hierarchy, and explicit prohibitions. Resolve style conflicts before rendering; do not merely list them.
 
 Combine the Step 1 prompt, the layout description, and the style specification into `figures/ai-illustration/final_prompt.txt`. Preserve all exact labels and scientific relationships.
 
-### Step 4: Render with Codex Built-in ImageGen
+### Step 4: Render with 宿主图像生成工具
 
 Use the built-in `image_gen` tool in generation mode with the complete contents of `final_prompt.txt`. Do not use an external image endpoint, an API key, the fallback CLI, or a one-off SDK runner.
 
@@ -292,11 +285,11 @@ The image request must identify the asset as a scientific-educational or infogra
 - readable text and arrowheads at final paper-placement size;
 - no unrequested objects or claims.
 
-After generation, inspect the returned image, copy it non-destructively into the project as `figures/ai-illustration/figure_v1.png`, and record that the provider was Codex built-in ImageGen. For later iterations use `figure_v2.png`, `figure_v3.png`, and so on.
+After generation, inspect the returned image, copy it non-destructively into the project as `figures/ai-illustration/figure_v1.png`, and record that the provider was 宿主图像生成工具. For later iterations use `figure_v2.png`, `figure_v3.png`, and so on.
 
-### Step 5: Codex STRICT Visual Review & Scoring (MANDATORY)
+### Step 5: 当前助手 STRICT Visual Review & Scoring (MANDATORY)
 
-**Codex MUST read the generated image and perform a STRICT review:**
+**当前助手 MUST read the generated image and perform a STRICT review:**
 
 1. **Visual Analysis**: What does the image show in detail?
 2. **Strengths**: What's good about it?
@@ -306,7 +299,7 @@ After generation, inspect the returned image, copy it non-destructively into the
 **STRICT Review Template:**
 
 ```markdown
-## Codex's STRICT Review of Figure v{N}
+## 当前助手's STRICT Review of Figure v{N}
 
 ### What I See
 [Describe the generated image in DETAIL - every block, every arrow]
@@ -411,7 +404,7 @@ IF score >= 9 AND all critical checks pass:
     → Accept figure, generate LaTeX snippet, DONE
 ELSE IF iteration < MAX_ITERATIONS:
     → Generate SPECIFIC improvement prompt based on EXACT issues
-    → Go to Step 2 (Codex Layout) with refined prompt
+    → Go to Step 2 (当前助手 Layout) with refined prompt
 ELSE:
     → Max iterations reached, show best version
     → Ask user if they want to continue or accept
@@ -419,7 +412,7 @@ ELSE:
 
 ### Step 7: Generate Improvement Prompt (for refinement)
 
-**Codex generates TARGETED improvement prompt with EXACT issues:**
+**当前助手 generates TARGETED improvement prompt with EXACT issues:**
 
 ```
 Refine this academic diagram. This is iteration {N}.
@@ -472,20 +465,20 @@ When figure is accepted (score ≥ 9):
 4. **VERIFY EVERY BLOCK CONTENT** — Wrong content = automatic fail (score ≤ 7)
 5. **BE SPECIFIC in feedback** — "Arrow from A to B points to wrong target C" not "arrow is wrong"
 6. **SAVE all iterations** — Keep version history for comparison
-7. **Codex is the STRICT boss** — Accept only excellence, not "good enough"
+7. **当前助手 is the STRICT boss** — Accept only excellence, not "good enough"
 8. **ARROW CORRECTNESS IS NON-NEGOTIABLE** — Any wrong arrow direction = reject
 9. **VISUAL APPEAL MATTERS** — Plain boring figures = score ≤ 8
 10. **Target score is 9** — Not 8, not "good enough"
-11. **USE MULTI-STAGE WORKFLOW** — Codex → Codex Layout → Codex Style → Codex ImageGen → Codex Review
-12. **USE CORRECT MODELS** — Codex reasoning for reasoning, Codex built-in ImageGen for rendering
+11. **USE MULTI-STAGE WORKFLOW** — 当前助手 → 当前助手 Layout → 当前助手 Style → 宿主图像生成工具 → 当前助手 Review
+12. **USE CORRECT MODELS** — 当前助手 reasoning for reasoning, 宿主图像生成工具 for rendering
 
 ## Output Structure
 
 ```
 figures/ai_generated/
-├── layout_description.txt  # Step 2: Codex layout optimization output
-├── style_spec.txt          # Step 3: Codex style verification output
-├── figure_v1.png           # Iteration 1 (Codex ImageGen render)
+├── layout_description.txt  # Step 2: 当前助手 layout optimization output
+├── style_spec.txt          # Step 3: 当前助手 style verification output
+├── figure_v1.png           # Iteration 1 (宿主图像生成工具 render)
 ├── figure_v2.png           # Iteration 2
 ├── figure_v3.png           # Iteration 3
 ├── figure_final.png        # Accepted version (copy of best, score ≥ 9)
@@ -497,8 +490,8 @@ figures/ai_generated/
 
 | Stage | Model | Purpose |
 |-------|-------|---------|
-| Step 1 | Codex | Parse request, create initial prompt |
-| Step 2 | Codex reasoning | Layout optimization (positioning, spacing, grouping) |
-| Step 3 | Codex reasoning | CVPR/NeurIPS style verification |
-| Step 4 | Codex built-in ImageGen (Codex ImageGen) | High-quality image rendering |
-| Step 5 | Codex | STRICT visual review and scoring |
+| Step 1 | 当前助手 | Parse request, create initial prompt |
+| Step 2 | 当前助手 reasoning | Layout optimization (positioning, spacing, grouping) |
+| Step 3 | 当前助手 reasoning | CVPR/NeurIPS style verification |
+| Step 4 | 宿主图像生成工具 (宿主图像生成工具) | High-quality image rendering |
+| Step 5 | 当前助手 | STRICT visual review and scoring |

@@ -1,4 +1,4 @@
-# Existing plotting/helper imports; use the host environment, no HaJiMi runtime required.
+# Existing plotting/helper imports; use the host environment, portable Python environment.
 # Core quantitative figures and data input
 numpy
 pandas
@@ -24,3 +24,6 @@ libpysal
 esda
 # Existing SVG renderer (Chrome fallback is also supported)
 CairoSVG
+
+# HTML rendering / geometry checks with an existing Chrome executable
+playwright

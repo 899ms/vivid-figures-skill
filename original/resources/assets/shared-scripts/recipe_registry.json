@@ -21,7 +21,7 @@
       "file": "figure_recipes_basic.md",
       "title": "折线图（渐变填充 + 极值标注箭头 + 微妙网格）",
       "legacy": "basic #3",
-      "contentSha256": "c0f655145509e0710710d07976ecd2f00e878091088c6973288d36f398168b02"
+      "contentSha256": "b85dba2439be57af18d4508ed89bc7ca6af641b055b3dd32f42cb1539f8b356d"
     },
     {
       "id": "basic.scatter_regression",

@@ -1,6 +1,6 @@
 # Agent 适配说明
 
-本 skill 适配两个 agent 环境：**Claude Code** 和 **OpenClaw**。
+本 skill 适配两个 agent 环境：**助手 Code** 和 **OpenClaw**。
 
 ---
 
@@ -45,19 +45,19 @@ humanities-thesis/
 
 ---
 
-## Claude Code 适配
+## 助手 Code 适配
 
 ### 安装与启动
 
 ```bash
-# 在项目目录下，Claude Code 会自动读取 SKILL.md
+# 在项目目录下，助手 Code 会自动读取 SKILL.md
 # 也可以手动指定
-claude --skill ./SKILL.md
+agent --skill ./SKILL.md
 ```
 
 ### 能力对照
 
-| 本 skill 需要的能力 | Claude Code 支持情况 | 调用方式 |
+| 本 skill 需要的能力 | 助手 Code 支持情况 | 调用方式 |
 |-------------------|-------------------|---------|
 | 读取 SKILL.md | ✓ 自动读取 | 放在项目根目录即可 |
 | 按需加载 references/ | ✓ 文件读取 | `cat references/xxx.md` |
@@ -75,7 +75,7 @@ pip install PyMuPDF pdfplumber python-docx beautifulsoup4 requests
 
 ### 文件读取流程
 
-用户上传文件后，Claude Code 可以直接访问文件：
+用户上传文件后，助手 Code 可以直接访问文件：
 
 ```python
 # PDF 文本提取
@@ -121,7 +121,7 @@ for para in doc.paragraphs:
 SKILL.md 中的 Rules（R1-R4）是硬性规则，两个 agent 环境都必须遵守。其核心目的是防止模型幻觉在学术场景中造成严重后果（编造文献、虚构引文）。
 
 具体来说：
-- **Claude Code**：Claude 模型本身的幻觉率较低，但在生成文献信息时仍然可能出错。Rules 的作用是在 skill 层面再加一道检查
+- **助手 Code**：助手 模型本身的幻觉率较低，但在生成文献信息时仍然可能出错。Rules 的作用是在 skill 层面再加一道检查
 - **OpenClaw**：如果底层使用的模型幻觉率较高（如某些开源模型），Rules 的约束尤为重要。建议在 agent 配置中将 temperature 设为较低值（0.3-0.5），并开启自我检查
 
 无论哪个 agent，生成的论文内容中如果涉及具体文献信息，都应提醒用户核实。

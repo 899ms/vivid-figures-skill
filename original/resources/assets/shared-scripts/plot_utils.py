@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""学术级图表工具库 — 统一风格，Claude 自由调用。
+"""学术级图表工具库 — 统一风格，绘图助手 自由调用。
 
 使用方式：
     from _utils.plot_utils import setup_style, heatmap, forest_plot, trend_plot
@@ -11,6 +11,10 @@ import os
 import sys
 import platform
 import numpy as np
+try:
+    from . import vivid_config as vc
+except ImportError:
+    import vivid_config as vc
 
 # 延迟导入 matplotlib，避免在没有 GUI 的环境报错
 _plt = None
@@ -39,182 +43,46 @@ def _get_sns():
 # ============================================================
 # 学术配色方案
 # ============================================================
-PALETTES = {
-    # ★ Soft（默认推荐）— 柔和明亮，纯白背景，大面积半透明渐变填充
-    # 柔蓝 + 珊瑚粉 + 薄荷绿 + 浅灰 + 淡紫 + 暖杏
-    'soft': ['#5B9BD5', '#ED7D7D', '#7BC8A4', '#B0B0B0', '#9B8EC4', '#F4A261'],
-
-    # Tableau 10 — 现代清新，区分度高，适合多组对比
-    'tableau': ['#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F', '#EDC948', '#B07AA1', '#FF9DA7', '#9C755F', '#BAB0AC'],
-
-    # NPG / Nature — 鲜明对比，适合生物/化学/自然科学
-    'npg': ['#E64B35', '#4DBBD5', '#00A087', '#3C5488', '#F39B7F', '#8491B4', '#91D1C2', '#DC0000', '#7E6148', '#B09C85'],
-
-    # NEJM — 柔和优雅，适合统计/医学类
-    'nejm': ['#BC3C29', '#0072B5', '#E18727', '#20854E', '#7876B1', '#6F99AD', '#FFDC91', '#EE4C97'],
-
-    # 经典学术，适合 IEEE/ACM/工程类论文
-    'science': ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e'],
-
-    # 色盲友好 (Wong 2011, Nature Methods) — 无障碍首选
-    'colorblind': ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#F0E442', '#56B4E9', '#E69F00', '#000000'],
-
-    # 顶刊风格 (Water Research / Nature 级别) — 低饱和莫兰迪色调，SCI 投稿首选
-    'journal': ['#4A90B8', '#E8927C', '#7BC8A4', '#B8B8B8', '#F7D097', '#9B8EC4', '#8DBFA3', '#D4A0A0'],
-
-    # ★ Elegant — 柔和通透，清新淡雅，适合统计建模/经管类论文
-    # 淡蓝灰 + 暖橙 + 薄荷绿 + 淡紫蓝 + 玫瑰粉 + 暖杏 + 灰蓝 + 淡青
-    'elegant': ['#7AAEC8', '#E8945A', '#7BC8A4', '#9B8EC4', '#E0A0A0', '#F0C05A', '#8FAEC0', '#A8C4D8'],
-
-    # ★ Nature — Nature/高影响因子期刊专用，深蓝主色+绿红对比+中性灰
-    # 适合 Nature、NeurIPS、ICLR 等顶刊/顶会投稿
-    'nature': ['#0F4D92', '#3775BA', '#8BCF8B', '#B64342', '#767676', '#42949E', '#9A4D8E', '#FFD700'],
-
-    # ==== 以下为「数据图随机风格」精选配色库(全部低饱和耐看/期刊级,POC 已验证) ====
-    'okabe_ito':    ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#56B4E9', '#D55E00', '#F0E442'],
-    'tol_muted':    ['#4477AA', '#CC6677', '#228833', '#CCBB44', '#66CCEE', '#AA3377', '#999933'],
-    'tol_vibrant':  ['#0077BB', '#EE7733', '#009988', '#CC3311', '#33BBEE', '#EE3377', '#5566AA'],
-    'nord':         ['#5E81AC', '#BF616A', '#A3BE8C', '#EBCB8B', '#B48EAD', '#88C0D0', '#D08770'],
-    'morandi':      ['#8B9DA7', '#B8938A', '#9CA98B', '#C4A69A', '#A6949C', '#7E8A99', '#C9B8A8'],
-    'sunburst':     ['#003F5C', '#58508D', '#BC5090', '#FF6361', '#FFA600', '#7A5195', '#EF5675'],
-    'ocean':        ['#05668D', '#028090', '#00A896', '#02C39A', '#0A9396', '#3D8DAE', '#94D2BD'],
-    'coral':        ['#FF6B6B', '#4ECDC4', '#45B7D1', '#F7A072', '#A06CD5', '#F79256', '#7DCFB6'],
-    'spring':       ['#219EBC', '#FB8500', '#6A994E', '#8ECAE6', '#BC4749', '#FFB703', '#023047'],
-    'retro':        ['#EA5545', '#EF9B20', '#87BC45', '#27AEEF', '#B33DC6', '#F46A9B', '#BDCF32'],
-    'dutch_field':  ['#E60049', '#0BB4FF', '#50E991', '#E6A800', '#9B19F5', '#F58518', '#00BFA0'],
-    'wine':         ['#5F0F40', '#9A031E', '#CB793A', '#0F4C5C', '#457B9D', '#7B2D26', '#BC6C25'],
-    'pastel':       ['#8AB6D6', '#F6A6B2', '#8FCB9B', '#C3A0D6', '#F9C979', '#7EC4C4', '#E0A0B8'],
-    'earth_forest': ['#386641', '#BC4749', '#6A994E', '#A7C957', '#C9A227', '#D4A373', '#7F5539'],
-    'teal_orange':  ['#1F6F78', '#FF8C42', '#2A9D8F', '#E76F51', '#457B9D', '#F4A261', '#264653'],
-    'candy':        ['#3FA7D6', '#EE6C4D', '#59CD90', '#F4C145', '#C05299', '#4D9DE0', '#E15554'],
-    'sage_rose':    ['#84A98C', '#A4243B', '#6B9080', '#C9ADA7', '#52796F', '#D8A48F', '#354F52'],
-    'plum_gold':    ['#4B3F72', '#FFC857', '#E9724C', '#255F85', '#C5283D', '#9B5094', '#F2A65A'],
-    'cobalt_coral': ['#274690', '#FF7F51', '#1B98E0', '#E8505B', '#47B39C', '#FFD166', '#6A4C93'],
-    'moss_clay':    ['#606C38', '#DDA15E', '#BC6C25', '#4A5A2B', '#A68A64', '#7F4F24', '#936639'],
-    'flamingo':     ['#3A86FF', '#F72585', '#4CC9F0', '#7209B7', '#4361EE', '#B5179E', '#4895EF'],
-    'desert':       ['#E07A5F', '#3D405B', '#81B29A', '#F2CC8F', '#6D597A', '#B56576', '#E56B6F'],
-    'peacock':      ['#006D77', '#E29578', '#83C5BE', '#EE9B00', '#CA6702', '#0A9396', '#9B2226'],
-    'aurora':       ['#5E81AC', '#A3BE8C', '#B48EAD', '#EBCB8B', '#BF616A', '#88C0D0', '#D08770'],
-    'vivid_bold':   ['#E63946', '#457B9D', '#2A9D8F', '#F4A261', '#8338EC', '#3A86FF', '#FB5607'],
-    'mint_lav':     ['#4CB5AE', '#B39CD0', '#FF8FA3', '#A8DADC', '#457B9D', '#FCBF49', '#8E7DBE'],
-}
-
-# 「随机模式」可抽取的配色池(不含 nature/npg 等有专属逻辑或过于特殊的,只放适合通用随机的)
-RANDOM_PALETTE_POOL = [
-    'elegant', 'okabe_ito', 'tol_muted', 'tol_vibrant', 'nord', 'morandi', 'sunburst', 'ocean',
-    'coral', 'spring', 'retro', 'dutch_field', 'wine', 'soft', 'journal', 'pastel',
-    'earth_forest', 'teal_orange', 'candy', 'sage_rose', 'plum_gold', 'cobalt_coral',
-    'moss_clay', 'flamingo', 'desert', 'peacock', 'aurora', 'vivid_bold', 'mint_lav',
-]
-
-# 默认配色（Elegant — 柔和通透，清新淡雅）
-PALETTE = list(PALETTES['elegant'])
+# All user palette definitions are maintained in palettes.json.
+_registry = vc.registry()
+PALETTES = {k: v['colors'] for k, v in _registry['palettes'].items()}
+PALETTE = vc.palette_colors()
 PALETTE_LIGHT = None  # 延迟初始化，在 _lighten 定义后赋值
 
 COLORS = {
-    'primary': '#7AAEC8',     # 淡蓝灰（主色调）
-    'secondary': '#E8945A',   # 暖橙（点缀色）
-    'accent': '#7BC8A4',      # 薄荷绿
+    'primary': PALETTE[0] if len(PALETTE)>0 else PALETTE[0],
+    'secondary': PALETTE[1] if len(PALETTE)>1 else PALETTE[0],
+    'accent': PALETTE[2] if len(PALETTE)>2 else PALETTE[0],
     'gray': '#B8B8B8',
     'light': '#F5F7FA',
     'dark': '#2D2D2D',
     # 语义颜色
-    'up': '#7BC8A4',          # 上升/正向 — 薄荷绿
-    'down': '#E0A0A0',        # 下降/负向 — 柔玫瑰
+    'up': PALETTE[2] if len(PALETTE)>2 else PALETTE[0],
+    'down': PALETTE[1] if len(PALETTE)>1 else PALETTE[0],
     'neutral': '#B8B8B8',     # 中性
-    'highlight': '#E8945A',   # 高亮/强调 — 暖橙
+    'highlight': PALETTE[4] if len(PALETTE)>4 else PALETTE[0],
     'ref_line': '#AAAAAA',    # 参考线
     'grid': '#E0E0E0',        # 网格线（很淡）
     'text': '#4A4A4A',        # 标注文字
     'bg_box': '#F5F7FA',      # 标注框背景
-    'bg_fill': '#C8DFF0',     # 边际/背景填充 — 淡天蓝
-    'bg_fill2': '#F0C8C8',    # 第二背景填充 — 淡粉
+    'bg_fill': None,
+    'bg_fill2': None,
 }
 
 
-def _fig_seed():
-    """确定性种子 = 工作区根目录名的 CRC32(与流程图同源思路)。
-    同一篇论文所有图共用同一种子→篇内统一;不同篇各异;重跑不变(可复现)。
-    绝不用 random/时间戳。
-
-    ⛔ 种子必须与"脚本从哪个子目录被执行"无关:画图脚本可能从工作区根、
-    figures/、code/ 等不同 cwd 运行。若直接用 basename(getcwd()) 当种子,cwd
-    一变种子就变——尤其当所有脚本都在 figures/ 里跑时 basename 恒为 'figures',
-    导致【所有论文同种子→配色永远同一套】(去指纹形同虚设)。
-    因此先从 cwd 向上寻找工作区根标志文件 CLAUDE.md 来锚定稳定的工作区名;
-    找不到(如无 CLAUDE.md 的测试环境)才退回 basename(getcwd()) 旧行为。"""
-    import zlib
-    name = None
-    try:
-        d = os.path.abspath(os.getcwd())
-        # 向上最多回溯 8 层找含 CLAUDE.md 的目录 = 工作区根(稳定锚点)
-        for _ in range(8):
-            if os.path.isfile(os.path.join(d, 'CLAUDE.md')):
-                name = os.path.basename(d)
-                break
-            parent = os.path.dirname(d)
-            if parent == d:  # 到达文件系统根,停止
-                break
-            d = parent
-    except Exception:
-        name = None
-    if not name:
-        try:
-            name = os.path.basename(os.getcwd()) or 'default'
-        except Exception:
-            name = 'default'
-    return zlib.crc32(name.encode('utf-8', 'replace'))
-
-
 def _read_palette_marker():
-    """读 CLAUDE.md 的 <!-- MH_DATA_FIG_PALETTE=xxx -->：
-    返回具体配色名(用户在前端手选固定)、'custom'、'random'、或 None(没写=随机)。"""
-    for p in ('CLAUDE.md', '../CLAUDE.md', '../../CLAUDE.md'):
-        try:
-            if os.path.isfile(p):
-                txt = open(p, encoding='utf-8', errors='replace').read()
-                import re as _re
-                m = _re.search(r'MH_DATA_FIG_PALETTE=([A-Za-z_]+)', txt)
-                if m:
-                    return m.group(1)
-        except Exception:
-            pass
-    return None
+    return vc.load_config()['palette']
 
 
 def _read_custom_colors():
-    """读 CLAUDE.md 的 <!-- MH_DATA_FIG_COLORS=#aabbcc,#ddeeff,... -->（用户自定义取色）：
-    返回合法 hex 列表(至少2个才算有效),否则 None。非法值过滤,防脏输入崩溃。"""
-    for p in ('CLAUDE.md', '../CLAUDE.md', '../../CLAUDE.md'):
-        try:
-            if os.path.isfile(p):
-                txt = open(p, encoding='utf-8', errors='replace').read()
-                import re as _re
-                m = _re.search(r'MH_DATA_FIG_COLORS=([#0-9A-Fa-f,]+)', txt)
-                if m:
-                    hexes = _re.findall(r'#[0-9A-Fa-f]{6}', m.group(1))
-                    if len(hexes) >= 2:
-                        return hexes
-        except Exception:
-            pass
-    return None
+    return vc.palette_colors()
 
 
 def _read_style_marker():
-    """读 CLAUDE.md 的 <!-- MH_DATA_FIG_STYLE=xxx -->（用户在前端手选固定版式风格族）：
-    返回合法风格族名(必须是 STYLE_FAMILIES 的键)或 None(没写/非法=不固定,按种子随机)。
-    仅固定"版式"这一维;配色/字体仍各自独立随机,最大保留篇间自然差异。"""
-    for p in ('CLAUDE.md', '../CLAUDE.md', '../../CLAUDE.md'):
-        try:
-            if os.path.isfile(p):
-                txt = open(p, encoding='utf-8', errors='replace').read()
-                import re as _re
-                m = _re.search(r'MH_DATA_FIG_STYLE=([A-Za-z_]+)', txt)
-                if m and m.group(1) in STYLE_FAMILIES:
-                    return m.group(1)
-        except Exception:
-            pass
-    return None
+    style = vc.load_config()['style']
+    if style not in STYLE_FAMILIES:
+        raise ValueError(f'Unknown Vivid layout: {style}')
+    return style
 
 
 # 「高级自定义版式」约束档位 —— 每个维度只给几个安全值(取自 STYLE_FAMILIES 验证过的值域),
@@ -230,39 +98,20 @@ _STYLE_CUSTOM_DIMS = {
 
 
 def _read_style_custom_marker():
-    """读 CLAUDE.md 的 <!-- MH_DATA_FIG_STYLE_CUSTOM=frame:open;grid:y;lw:mid -->:
-    返回 {frame,grid,lw} 档位字典(仅保留合法档位),任一维缺失/非法则用该维默认(第一档)。
-    整条标记不存在 → None(不启用自定义)。"""
-    for p in ('CLAUDE.md', '../CLAUDE.md', '../../CLAUDE.md'):
-        try:
-            if os.path.isfile(p):
-                txt = open(p, encoding='utf-8', errors='replace').read()
-                import re as _re
-                # 捕获到空白/`>` 前的整段（不用 [A-Za-z] 类，否则遇到脏字符会截断丢掉后面合法档位）；
-                # 每个档位的合法性由下面 _STYLE_CUSTOM_DIMS 白名单逐个过滤，脏值自然被剔除。
-                m = _re.search(r'MH_DATA_FIG_STYLE_CUSTOM=([^\s>]+)', txt)
-                if not m:
-                    continue
-                spec = {}
-                for pair in m.group(1).split(';'):
-                    if ':' not in pair:
-                        continue
-                    k, v = pair.split(':', 1)
-                    k, v = k.strip(), v.strip()
-                    if k in _STYLE_CUSTOM_DIMS and v in _STYLE_CUSTOM_DIMS[k]:
-                        spec[k] = v
-                # 任一维缺失 → 补该维默认(第一档),保证 knobs 完整
-                for k, allowed in _STYLE_CUSTOM_DIMS.items():
-                    spec.setdefault(k, allowed[0])
-                return spec
-        except Exception:
-            pass
-    return None
+    spec = vc.load_config().get('style_custom')
+    if spec is None:
+        return None
+    if not isinstance(spec, dict):
+        raise ValueError('style_custom must be an object')
+    for key, value in spec.items():
+        if key not in _STYLE_CUSTOM_DIMS or value not in _STYLE_CUSTOM_DIMS[key]:
+            raise ValueError(f'Invalid layout setting: {key}={value}')
+    return {key: spec.get(key, allowed[0]) for key, allowed in _STYLE_CUSTOM_DIMS.items()}
 
 
 # ============================================================
 # 「成品风格族」—— 每套是一组经审美验证、彼此自洽的完整版式参数。
-# 随机模式按种子从这里【整套】选一个（不再逐旋钮独立乱配 → 杜绝丑组合）。
+# 项目配置选择一套完整参数，也可按用户要求使用自定义版式。
 # 关键：每套都【显式控制刻度四面】，tick_tr=False 时关掉上/右刻度 = 消灭“上右黑点点”。
 # ============================================================
 STYLE_FAMILIES = {
@@ -288,12 +137,6 @@ STYLE_FAMILIES = {
 _STYLE_FAMILY_NAMES = list(STYLE_FAMILIES.keys())
 
 
-def _derive_fig_knobs(seed):
-    """按种子从 STYLE_FAMILIES 整套选一个（不再逐旋钮独立乱配）。"""
-    name = _STYLE_FAMILY_NAMES[(seed // 7) % len(_STYLE_FAMILY_NAMES)]
-    fam = dict(STYLE_FAMILIES[name])
-    fam['_name'] = name
-    return fam
 
 
 def _knobs_from_custom(spec):
@@ -329,73 +172,29 @@ def _knobs_from_custom(spec):
         'spines': f['spines'], 'tick_dir': f['tick_dir'], 'tick_tr': f['tick_tr'],
         'legend_frame': legend_frame, 'axis_color': f['axis_color'],
         'grid': g, 'patch_edge': 'white', 'lw': lw, 'ms': ms,
-        'font_size': fs, 'facecolor': facecolor,   # ★ 新维(setup_style 用 .get 消费,预设/随机路径无此键不受影响)
+        'font_size': fs, 'facecolor': facecolor,   # ★ 新维(setup_style 用 .get 消费,预设路径无此键不受影响)
         '_name': f"custom({spec.get('frame','open')}/{spec.get('grid','none')}/{spec.get('lw','mid')}"
                  f"/{spec.get('font','medium')}/{spec.get('legend','-')}/{spec.get('bg','white')})",
     }
 
 
 def setup_style(palette='auto'):
-    """初始化学术论文图表风格。调用一次即可。
-
-    Args:
-        palette: 配色方案名称。可选值：
-            'auto' — 默认 Elegant（柔和通透，清新淡雅）
-            'elegant' — ★ 默认推荐：薄荷绿+淡紫+暖杏黄，柔和通透
-            'journal' — 顶刊风格，低饱和莫兰迪色调，SCI 投稿首选
-            'soft' — 柔蓝+珊瑚粉+薄荷绿+浅灰+淡紫+暖杏
-            'tableau' — Tableau 10 现代清新，适合多组对比
-            'npg' — Nature 鲜明对比，适合自然科学
-            'nejm' — 柔和优雅，适合统计/医学
-            'science' — 经典学术配色，适合工程类
-            'colorblind' — 色盲友好（备选）
-            或直接传一个颜色列表 ['#xxx', '#yyy', ...]
-    """
+    """Load project palette and layout; explicit palette arguments remain supported."""
     plt = _get_plt()
     import matplotlib
     sns = _get_sns()
-
-    # ★ 随机模式判定：palette 为 'auto'/None 时启用种子随机（去指纹核心）；
-    #   显式传具体配色名（如 'nature'）或颜色列表 → 完全按指定，不随机（向后兼容）。
-    _random_mode = (palette == 'auto' or palette is None)
-    _seed = _fig_seed() if _random_mode else 0
-    if _random_mode:
-        # 版式优先级:①高级自定义档位 > ②手选固定风格族 > ③按种子随机(去指纹默认)。
-        # 只固定"版式"这一维,配色/字体仍各自独立随机,最大保留篇间自然差异。
-        _custom_spec = _read_style_custom_marker()
-        _style_pick = _read_style_marker()
-        if _custom_spec:
-            _knobs = _knobs_from_custom(_custom_spec)
-        elif _style_pick:
-            _knobs = dict(STYLE_FAMILIES[_style_pick])
-            _knobs['_name'] = _style_pick
-        else:
-            _knobs = _derive_fig_knobs(_seed)
-    else:
-        _knobs = None
-
-    # 选择配色
+    _project_mode = palette == 'auto' or palette is None
+    _custom_spec = _read_style_custom_marker() if _project_mode else None
+    _knobs = (_knobs_from_custom(_custom_spec) if _custom_spec else
+              dict(STYLE_FAMILIES[_read_style_marker()])) if _project_mode else None
     if isinstance(palette, list):
         colors = palette
-    elif _random_mode:
-        _marker = _read_palette_marker()   # 前端手选:配色名 / 'custom' / 'random' / None
-        _custom = _read_custom_colors() if _marker == 'custom' else None
-        if _custom:
-            colors = list(_custom)         # 用户自定义取色 → 直接用（不轮转，尊重用户排序）
-        elif _marker and _marker in PALETTES and _marker != 'random':
-            _pal_name = _marker            # 用户指定预设 → 配色固定（字体/版式仍按种子随机）
-            colors = list(PALETTES[_pal_name])
-            _rot = (_seed // 3) % len(colors)
-            colors = colors[_rot:] + colors[:_rot]
-        else:
-            _pal_name = RANDOM_PALETTE_POOL[_seed % len(RANDOM_PALETTE_POOL)]  # 种子选一套
-            colors = list(PALETTES[_pal_name])
-            _rot = (_seed // 3) % len(colors)  # 同套配色也按种子轮转主色顺序，进一步去重
-            colors = colors[_rot:] + colors[:_rot]
+    elif _project_mode:
+        colors = vc.palette_colors()
     elif palette in PALETTES:
-        colors = PALETTES[palette]
+        colors = list(PALETTES[palette])
     else:
-        colors = PALETTES['journal']
+        raise ValueError(f'Unknown palette: {palette}')
 
     # 更新全局 PALETTE 供其他函数使用
     global PALETTE, PALETTE_LIGHT, COLORS
@@ -405,9 +204,11 @@ def setup_style(palette='auto'):
     COLORS['secondary'] = colors[1] if len(colors) > 1 else colors[0]
     COLORS['accent'] = colors[2] if len(colors) > 2 else colors[0]
     # 语义颜色跟随配色方案
-    COLORS['up'] = colors[2] if len(colors) > 2 else '#7BC8A4'       # 上升 = accent 色
-    COLORS['down'] = colors[1] if len(colors) > 1 else '#ED7D7D'     # 下降 = secondary 色
+    COLORS['up'] = colors[2] if len(colors) > 2 else colors[0]       # 上升 = accent 色
+    COLORS['down'] = colors[1] if len(colors) > 1 else colors[0]     # 下降 = secondary 色
     COLORS['highlight'] = colors[4] if len(colors) > 4 else colors[0]  # 高亮
+    COLORS['bg_fill'] = _lighten(colors[0], 0.8)
+    COLORS['bg_fill2'] = _lighten(colors[1] if len(colors)>1 else colors[0], 0.8)
 
     # 保持既有导出边界设置。
     matplotlib.rcParams['savefig.bbox'] = 'standard'
@@ -435,11 +236,6 @@ def setup_style(palette='auto'):
                          'Droid Sans Fallback', 'SimHei', 'AR PL UMing CN']
 
     zh_fonts = [f for f in zh_candidates if f in available_fonts]
-
-    # ★ 随机模式：从已装中文字体池里按种子选一个当首选（只在已装的里选=零方框风险）
-    if _random_mode and zh_fonts:
-        _pick = zh_fonts[(_seed // 5) % len(zh_fonts)]
-        zh_fonts = [_pick] + [f for f in zh_fonts if f != _pick]
 
     if not zh_fonts:
         # 没有任何中文字体——尝试加载内置字体文件
@@ -505,7 +301,7 @@ def setup_style(palette='auto'):
     matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler(color=colors)
 
     # ★ 随机模式：按【成品风格族】整套应用版式（自洽、好看；显式控制刻度四面 = 消灭上右黑点）
-    if _random_mode and _knobs:
+    if _project_mode and _knobs:
         _f = _knobs
         _ac = _f['axis_color']
         _sp = _f['spines']
@@ -537,7 +333,7 @@ def setup_style(palette='auto'):
             'patch.linewidth': {'white': 1.0, 'white_bold': 1.5, 'none': 0.0}.get(_pe, 1.0),
         })
         # ★ 高级自定义新维（字号/背景）——仅 custom 路径的 knobs 有这两键，用 .get 兜底，
-        #   预设/随机路径无此键时不覆盖上面设过的默认值（font.size=11 / facecolor=white）。
+        #   预设路径无此键时不覆盖上面设过的默认值（font.size=11 / facecolor=white）。
         _fsz = _f.get('font_size')
         if _fsz:
             _base, _lbl, _ttl, _tk = _fsz
@@ -548,25 +344,6 @@ def setup_style(palette='auto'):
         _fc = _f.get('facecolor')
         if _fc:
             matplotlib.rcParams['axes.facecolor'] = _fc
-
-    # ★ Nature 专属参数覆盖（字号更大、轴线更粗，匹配 Nature 出版标准）
-    _palette_name = palette if isinstance(palette, str) else None
-    if _palette_name in ('nature', 'npg'):
-        matplotlib.rcParams.update({
-            'font.size': 16,            # Nature 标准：正文 16pt
-            'axes.labelsize': 16,
-            'axes.titlesize': 18,
-            'axes.linewidth': 2.5,      # Nature 标准：粗轴线
-            'xtick.labelsize': 14,
-            'ytick.labelsize': 14,
-            'legend.fontsize': 13,
-            'lines.linewidth': 2.5,
-            'lines.markersize': 8,
-            'xtick.major.width': 2.0,
-            'ytick.major.width': 2.0,
-            'xtick.major.size': 6,
-            'ytick.major.size': 6,
-        })
 
     # ★ Hook plt.savefig — 即使不用 save_fig()，也能自动防遮挡
     # Preserve author layout: do not install automatic savefig mutation hooks.
@@ -636,7 +413,9 @@ def _lighten(hex_color, amount=0.4):
 
 
 # 初始化 PALETTE_LIGHT（必须在 _lighten 定义之后）
-PALETTE_LIGHT = [_lighten(c, 0.4) for c in PALETTES['soft']]
+PALETTE_LIGHT = [_lighten(c, 0.4) for c in PALETTE]
+COLORS["bg_fill"] = _lighten(PALETTE[0], 0.8)
+COLORS["bg_fill2"] = _lighten(PALETTE[1], 0.8)
 
 
 def _pull_back_outside_transaxes_text(fig):

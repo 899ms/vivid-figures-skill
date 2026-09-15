@@ -1,10 +1,3 @@
----
-name: mermaid-diagram
-description: Generate Mermaid diagrams from user requirements. Saves .mmd and .md files to figures/ directory with syntax verification. Supports flowcharts, sequence diagrams, class diagrams, ER diagrams, Gantt charts, and 18 more diagram types.
-argument-hint: [diagram description or requirements]
-allowed-tools: Bash(*), Read, Write, Edit, Glob, Grep
----
-
 # Mermaid Diagram Generator
 
 Generate high-quality Mermaid diagram code based on user requirements, with file output and verification.
@@ -25,7 +18,7 @@ mkdir -p figures
 
 ### Step 1: Understand Requirements & Select Diagram Type
 
-Parse the input: **$ARGUMENTS**
+Parse the input: 用户提供的数据与绘图要求
 
 1. Analyze user description to determine the most suitable diagram type
 2. Read the corresponding syntax reference documentation (see Diagram Type Reference below)
@@ -35,7 +28,7 @@ Parse the input: **$ARGUMENTS**
 
 ### Step 2: Read Documentation
 
-Select the appropriate diagram type based on the use case. Use your built-in knowledge of Mermaid syntax, or fetch up-to-date docs via the context7 MCP server if needed.
+Select the appropriate diagram type based on the use case. Use your built-in knowledge of Mermaid syntax, or read the current official Mermaid documentation using available tools if needed.
 
 | Type | Use Cases |
 | ---- | --------- |
@@ -109,7 +102,7 @@ flowchart TD
 
 ### Step 4: Verify Mermaid Syntax (MANDATORY)
 
-**Claude MUST verify the generated Mermaid code by running the Mermaid CLI (`mmdc`).**
+**助手 MUST verify the generated Mermaid code by running the Mermaid CLI (`mmdc`).**
 
 ```bash
 # Check if mermaid-cli is available
@@ -130,12 +123,12 @@ fi
 3. Re-run verification
 4. Repeat up to MAX_ITERATIONS (3) times
 
-### Step 5: Claude STRICT Visual Review & Scoring (MANDATORY)
+### Step 5: 助手 STRICT Visual Review & Scoring (MANDATORY)
 
-After successful rendering, Claude MUST read the generated PNG and perform a STRICT review:
+After successful rendering, 助手 MUST read the generated PNG and perform a STRICT review:
 
 ```markdown
-## Claude's STRICT Review of <diagram-name>
+## 助手's STRICT Review of <diagram-name>
 
 ### What I See
 [Describe the rendered diagram in DETAIL - every block, every arrow, every label]

@@ -1,14 +1,13 @@
-# Modeling mermaid-diagram compatibility entrypoint
+# Modeling mermaid-diagram workflow
 
-This adapter changes execution and workflow scope only. It does not rewrite the vendored drawing instructions.
+执行下列工作流；公共配置与检查规则由入口统一加载。
 
 1. Run `python scripts/bootstrap.py --workspace <active-project-root> --profile modeling-competition --capability mermaid-diagram`.
 2. Read `references/mermaid-diagram.md` completely and follow it as the authoritative prompt for visual design, chart/diagram construction, templates, export quality, review, and iteration.
-3. Use the executable paths in `<active-project-root>/.codex-plot-runtime.json`.
+3. Use the executable paths in `<active-project-root>/.vivid/runtime.json`.
 
-The complete original prompt is loaded, including all modeling planning, reconciliation, and quality gates.
+规划、对账与绘图要求从所选工作流加载；检查规则只维护在 review-policy.md。
 
-Compatibility translation: “Claude” means Codex; legacy tool names map to the available terminal, file-reading, and image-inspection tools. Missing `CLAUDE.md` or `MH_*` variables are not errors because the runtime supplies their execution-time equivalents.
 
 Use the runtime's `render_mermaid.py`; it selects the working system Chrome and supports SVG, PNG, and PDF without Puppeteer's incompatible bundled browser.
 

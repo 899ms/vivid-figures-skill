@@ -1,61 +1,23 @@
 # 配色选择
 
-统一沿用 expressive 绘图指导，使用时只选择配色。配色只决定颜色搭配，不改变选图、构图、模板、尺寸、渐变、透明度及审图修复要求。
+本 Skill 使用一套绘图指导，配色只决定颜色搭配。七套配色及颜色顺序唯一维护于 [palettes.json](original/resources/assets/shared-scripts/palettes.json)，文档和示例不另存一份颜色表。
 
-## 使用前询问
+可选：**橄榄杏棕（默认）**、珊瑚青绿、蓝粉浅彩、蓝天绿地、柔绿森林、粉彩少女、海洋清风，以及自定义颜色。「橄榄行踪」按现有橄榄杏棕识别。
 
-在本次绘图开始前，若用户尚未明确选择配色，也未明确要求沿用现有配色、使用默认或由 Agent 决定，先列出以下选项并询问，收到选择后再绘制。只询问配色，不再询问绘图模式。
+已有选择时沿用，补图或修图不重复询问。用户未指定配色时使用默认；明确要求由助手决定时可选择并简短告知。用户自己的颜色优先，不按目录名抽选主题。
 
-- 珊瑚青绿（默认）
-- 橄榄杏棕
-- 蓝粉浅彩
-- 蓝天绿地
-- 柔绿森林
-- 粉彩少女
-- 海洋清风
-- 自定义颜色
+在初始化工作区后，用所选 Python 执行：
 
-例如：“配色可选珊瑚青绿、橄榄杏棕、蓝粉浅彩、蓝天绿地、柔绿森林、粉彩少女、海洋清风，也可以提供自定义颜色。”
-
-同一任务已明确选定时，后续补图、修图和继续执行沿用该选择，不逐图重复询问。用户说“默认”就用珊瑚青绿；说“你决定”时可直接选择并简短告知。未回复不视为同意默认。
-
-## 配色表
-
-以下颜色按顺序使用。新增的蓝天绿地、柔绿森林、粉彩少女、海洋清风按用户提供截图底部的 HEX 标签录入，每套完整保留 8 色。
-
-| 选项 | 颜色顺序 / 原有配置 |
-|---|---|
-| 珊瑚青绿（默认） | `#4ECDC4,#FF6B6B,#45B7D1,#F7A072,#A06CD5,#F79256,#7DCFB6` |
-| 橄榄杏棕 | `#606C38,#DDA15E,#BC6C25,#4A5A2B,#A68A64,#7F4F24,#936639` |
-| 蓝粉浅彩 | `#6797C7,#91ACC7,#A494C2,#D7979C,#99999F` |
-| 蓝天绿地 | `#377EB8,#B23648,#DC7369,#D8EBCD,#F8EFB5,#DAD4B9,#C8CDCF,#E1F3FA` |
-| 柔绿森林 | `#B8DBB3,#86BC79,#71A682,#81989B,#D19246,#B5AF8B,#7EA4B6,#4A4F7E` |
-| 粉彩少女 | `#B6B3D6,#CFCCE3,#D5D3DE,#D5D1D1,#F6DFD6,#F8B2A2,#F1837A,#E9687A` |
-| 海洋清风 | `#BFDFD2,#51999F,#4198AC,#7BC0CD,#DBCB92,#ECB66C,#EA9E58,#ED8D5A` |
-
-## 使用现有接口
-
-在任务工作区的 `CLAUDE.md` 中保留其他内容，更新对应的原有标记，不重复追加同名标记。选择上表任意配色或用户提供的自定义颜色时，使用 `MH_DATA_FIG_PALETTE=custom`，将颜色顺序写入 `MH_DATA_FIG_COLORS`。例如，选择珊瑚青绿时使用：
-
-```html
-<!-- MH_DATA_FIG_PALETTE=custom -->
-<!-- MH_DATA_FIG_COLORS=#4ECDC4,#FF6B6B,#45B7D1,#F7A072,#A06CD5,#F79256,#7DCFB6 -->
+```bash
+python _utils/vivid_config.py palettes
+python _utils/vivid_config.py set palette olive-apricot
 ```
 
-选择橄榄杏棕时使用：
+命令可加 `--workspace <任务目录>`，也可在其子目录运行。配置保存在 `.vivid/config.json`。预设只保存 ID，读取时从色板文件取得颜色；自定义使用 `palette: "custom"` 与至少两个 HEX 字符串构成的 `colors` 数组。一次写入自定义设置：
 
-```html
-<!-- MH_DATA_FIG_PALETTE=custom -->
-<!-- MH_DATA_FIG_COLORS=#606C38,#DDA15E,#BC6C25,#4A5A2B,#A68A64,#7F4F24,#936639 -->
+```python
+from _utils.vivid_config import write_config
+write_config(workspace, palette="custom", colors=user_colors)
 ```
 
-选择蓝粉浅彩时使用：
-
-```html
-<!-- MH_DATA_FIG_PALETTE=custom -->
-<!-- MH_DATA_FIG_COLORS=#6797C7,#91ACC7,#A494C2,#D7979C,#99999F -->
-```
-
-`MH_DATA_FIG_STYLE` 继续遵循绘图指导/用户已有版式设置，不因换色修改。
-
-生成代码继续在 `setup_style()` 后读取 `pu.PALETTE` / `pu.COLORS`。本选择仅覆盖 expressive 文档及宿主适配中默认色板、默认具体色相的描述；其余提示词与代码不变。分类色、主色和强调色随选择变化，浅填充、原色描边和透明层次仍按原配方执行。连续量的渐变按原模板和数据语义处理，不因更换分类色板而统一改成主题单色或简化渐变。流程/框图统一主色、工程图保留原配色、批注白底等原有范围规定继续适用。
+生成代码在 `setup_style()` 后读取 `pu.PALETTE` / `pu.COLORS`。换色不改变已选模板、用户已有版式、字体尺寸、渐变、透明度或审图要求。分类色随项目选择，连续量沿用对应配方的连续色图。流程/框图统一主色，工程图保留原配色，批注白底，具体执行见 [绘图指导](original/drawing-guide.md)。

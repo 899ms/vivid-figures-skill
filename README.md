@@ -12,7 +12,7 @@
 
 采用 [Agent Skills 开放规范](https://agentskills.io/specification)：根目录 `SKILL.md` 使用标准 YAML 元数据和 Markdown 正文，其他文件按相对路径加载。可交给支持该规范、具备文件读写、代码执行与图像查看能力的助手使用；安装位置及调用方式由具体客户端决定。
 
-本次格式转换仅调整宿主说明与加载入口，绘画流程、提示词、配方、字体和执行脚本保持原样。`CLAUDE.md`、`.codex-plot-runtime.json` 等原有名称保留为脚本兼容接口。开放的是封装格式，使用许可仍见 [LICENSE](LICENSE)。
+采用开放 Agent Skills 格式。绘图指导统一维护，配色由单一 JSON 色板提供，项目配置使用 `.vivid/`。使用许可见 [LICENSE](LICENSE)。
 
 ## 你可以让它做什么
 
@@ -44,11 +44,11 @@
 |:---:|:---:|
 | [![粉彩少女配色示意](docs/images/palettes/pastel-girl.png)](docs/images/palettes/pastel-girl.png) | [![海洋清风配色示意](docs/images/palettes/ocean-breeze.png)](docs/images/palettes/ocean-breeze.png) |
 
-[完整色值](color-selection.md) · [高清 PNG / SVG / PDF 与生成源码](examples/palette-posters/README.md)
+[完整色值](original/resources/assets/shared-scripts/palettes.json) · [高清 PNG / SVG / PDF 与生成源码](examples/palette-posters/README.md)
 
-默认珊瑚青绿，也支持自定义颜色。蓝粉浅彩海报的 F/G 为原色的浅色派生；蓝天绿地、粉彩少女海报对过浅图元减少提亮并加深同色轮廓，保留透明度。原色值未修改。原三张采用七组数据，新四张采用八组数据，各组数内共用数据和布局。
+默认橄榄杏棕，也支持自定义颜色。蓝粉浅彩海报的 F/G 为原色的浅色派生；蓝天绿地、粉彩少女海报对过浅图元减少提亮并加深同色轮廓，保留透明度。原色值未修改。原三张采用七组数据，新四张采用八组数据，各组数内共用数据和布局。
 
-绘图统一沿用 expressive 的选图、构图与检查指导，只需选择配色。没有选定配色时，AI 会先询问；同一任务的补图和修图会沿用已有选择。也可以直接说“用默认”或“你来决定”。
+绘图沿用统一的选图、构图与检查指导，只需选择配色。没有选定配色时使用橄榄杏棕；同一任务的补图和修图会沿用已有选择。也可以直接说“用默认”或“你来决定”。
 
 ## 安装后，直接这样说
 
@@ -80,7 +80,7 @@ AI 会读取数据、选择配方、执行绘图、查看生成结果并按需�
 - **完整图集规划**：建议安装 Node.js 22.6+。
 - **可选能力**：流程图、LaTeX 技术图、HTML、Mermaid 或 AI 场景插图，各自需要对应工具；普通数据图不必把这些全部装上。
 
-**第一次使用，请按 [安装指南](docs/INSTALL.md) 完成 Skill 和 Python 依赖安装**。里面分别提供 Windows、macOS/Linux 命令，以及可选工具说明。普通数据图无需安装 HaJiMi 应用，也不需要额外配置 OpenAI API Key；AI 助手自身的账户或模型连接仍需可用。
+**第一次使用，请按 [安装指南](docs/INSTALL.md) 完成 Skill 和 Python 依赖安装**。里面分别提供 Windows、macOS/Linux 命令，以及可选工具说明。普通数据图不需要额外配置图像生成 API Key；AI 助手自身的账户或模型连接仍需可用。
 
 ## 模板会被 AI 简化吗
 

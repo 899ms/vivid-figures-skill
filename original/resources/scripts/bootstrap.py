@@ -23,8 +23,7 @@ def detect_profile(workspace: Path) -> str:
         workspace / "PROBLEM_ANALYSIS.md",
         workspace / "PAPER_PLAN.md",
         workspace / "MODELING_REPORT.md",
-        workspace / "CLAUDE.md",
-        workspace / "CODEX.md",
+        workspace / ".vivid/config.json",
     ]
     for path in candidates:
         if not path.is_file():
@@ -40,14 +39,17 @@ def copy_tree_files(source: Path, destination: Path, force: bool = False):
     skipped = 0
     destination.mkdir(parents=True, exist_ok=True)
     for src in source.rglob("*"):
-        if not src.is_file():
+        if not src.is_file() or src.suffix in (".enc", ".pyc") or "__pycache__" in src.parts:
             continue
         rel = src.relative_to(source)
         dst = destination / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         if dst.exists() and not force:
-            skipped += 1
-            continue
+            baselines_path = Path(__file__).with_name('resource-baselines.json')
+            baselines = json.loads(baselines_path.read_text(encoding='utf-8')) if baselines_path.exists() else {}
+            if sha256(dst) not in baselines.get(src.name, []):
+                skipped += 1
+                continue
         shutil.copy2(src, dst)
         copied += 1
     return copied, skipped
@@ -72,9 +74,18 @@ def main():
     workspace = Path(args.workspace).resolve()
     if not workspace.is_dir():
         raise SystemExit(f"Workspace does not exist: {workspace}")
+    # --workspace explicitly establishes a new project boundary, even inside
+    # another configured project. Never inherit or update the parent's config.
+    config_dir = workspace / ".vivid"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        with (config_dir / "config.json").open("x", encoding="utf-8") as handle:
+            handle.write("{}\n")
+    except FileExistsError:
+        pass
     root = Path(__file__).resolve().parent.parent
     assets = root / "assets"
-    # HaJiMi: refresh only the identified pristine helper, preserving custom files.
+    # Refresh: refresh only the identified pristine helper, preserving custom files.
     for relative in ("_utils/plot_utils.py", "skills/shared-scripts/plot_utils.py"):
         existing = workspace / relative
         if existing.is_file() and sha256(existing) == "63ad0791b7262e562a28e1500ba8f15005ca66e815f6230df1951197beb89a25":
@@ -97,7 +108,6 @@ def main():
     shared_project = workspace / "skills/shared-scripts"
     utils = workspace / "_utils"
     templates = workspace / "_templates"
-    tools = workspace / "tools"
 
     copied_shared, skipped_shared = copy_tree_files(
         assets / "shared-scripts", shared_project, args.force
@@ -108,10 +118,6 @@ def main():
     copied_templates, skipped_templates = copy_tree_files(
         assets / "html-templates", templates, args.force
     )
-    copied_tools, skipped_tools = copy_tree_files(
-        assets / "tools", tools, args.force
-    )
-    copy_tree_files(assets / "tools", utils, args.force)
 
     runtime = resolve()
     metadata = {
@@ -125,17 +131,19 @@ def main():
             "shared_scripts": str(shared_project),
             "utils": str(utils),
             "templates": str(templates),
-            "tools": str(tools),
         },
         "injection": {
             "shared": {"copied": copied_shared, "preserved": skipped_shared},
             "utils": {"copied": copied_utils, "preserved": skipped_utils},
             "templates": {"copied": copied_templates, "preserved": skipped_templates},
-            "tools": {"copied": copied_tools, "preserved": skipped_tools},
         },
-        "prompt_policy": "vendored drawing prompts are immutable",
+        "prompt_policy": "drawing semantics and recipe layers are preserved",
     }
-    meta_path = workspace / ".codex-plot-runtime.json"
+    import sys
+    sys.path.insert(0, str(assets / 'shared-scripts'))
+    from vivid_config import write_config
+    write_config(workspace)
+    meta_path = workspace / ".vivid/runtime.json"
     meta_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(metadata, ensure_ascii=False, indent=2))
     return 0

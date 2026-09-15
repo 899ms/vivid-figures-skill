@@ -1,6 +1,6 @@
 __pycache__/
 *.py[cod]
 .DS_Store
-.codex-plot-runtime.json
+.vivid/
 _utils/
 figures/

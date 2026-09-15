@@ -1,6 +1,6 @@
-﻿# 科研图表风格指南
+# 科研图表风格指南
 
-Claude 画图时参考此文件，提升图表的学术美观度。所有图表必须达到 SCI/Nature 发表水准。
+助手 画图时参考此文件，提升图表的学术美观度。所有图表必须达到 SCI/Nature 发表水准。
 
 ## 按图表类型的配色策略（⛔ 必须遵循）
 
@@ -161,7 +161,7 @@ Not every "upgrade" is appropriate. Check this table, but choose based on clarit
 
 同一套 `setup_style()` 下，图的档次差别几乎全来自下面 6 条，而**不是**图内文字多少。经对 94 张真实竞赛图的逐图核对，高分图与平庸图的差距集中在这里。**按题目实际需要挑用，不要为凑指标硬加**：
 
-1. **多 panel 并陈，别一图一事**：相关的几件事放进同一张图的 2-4 个 panel（如"分布 + 与上限对照"、"主结果 + 残差诊断"、"处理前 ‖ 处理后"）。读者一眼看到关联，比分成 3 张孤图强得多。用 `plt.subplots(2,2)` 或 `GridSpec`（要不等宽/不等高时用后者）。**平庸图的典型特征就是每张都单 panel。**
+1. **按信息收益选表达**：比较新颖单图、同坐标系融合与多面板组合；面板应提供互补信息，不默认多面板优先，也不以子图数量衡量质量。
 2. **判据可视化——把"该不该越界"画出来**：有阈值/上限/约束/合格线时，画一条 `axhline`/`axvline`（虚线 + 线旁短标签），让读者直接看到"实测离限还有多远"。这是"有判据"和"只有一堆曲线"的分水岭。
 3. **表达不确定性**：有多次重复/置信区间/误差范围时，用 `fill_between` 画置信带或 `errorbar` 画误差棒，不要只画一条均值线。一条光溜的线读者无法判断可信度。
 4. **图型跟着数据形态走，别一律折线柱状**：三维响应面用 `plot_surface`、分布形态用小提琴/Rain Cloud、密集散点用 `hexbin`、流向用桑基、排序驱动因子用 Tornado（见上方决策表）。**只会 plot/bar/scatter 是平庸图最明显的信号。**
@@ -176,7 +176,7 @@ Not every "upgrade" is appropriate. Check this table, but choose based on clarit
 
 ### ⛔ 工程卫生（保证"图是可信的工程产物"）
 - **数值/常数从真实来源读**：坐标、阈值、统计量、每个 bar 的高度应来自计算结果或数据文件（如 `results.json`、`df`），不要在绘图脚本里凭空写死来路不明的数字。图里的每个数字都要对得上正文。
-- **连续 colormap 优先走 PALETTE 派生**：需要连续色阶时（热力图、3D surface、密度图），优先 `LinearSegmentedColormap.from_list(..., [_lighten(PALETTE[0],0.7), PALETTE[0]])`；少用硬编码 `cmap='viridis'/'YlOrRd'`（与随机配色不同步），`jet` 有感知误导不要用。
+- **连续色图保真**：按原配方与数据语义保留连续色阶，不因更换分类配色而统一改成主题单色；渐变、透明层次与原色描边各司其职。
 - **异量纲隔离，别强行同轴**：单位/量级差异大的量（如"时间 s"和"百分比 %"）不要塞进同一个 Y 轴。用双轴 `ax.twinx()`（各自标注单位）或拆成上下 panel。同轴混画不同量纲会让读者误判相对大小。
 - **图能独立复现**：脚本从数据到 `save_fig` 一条龙跑通，不依赖手动改数或某次交互状态；交付前顺手清掉调试残留（`plt.show()`、被注释掉的整段旧画法）。
 
@@ -184,7 +184,7 @@ Not every "upgrade" is appropriate. Check this table, but choose based on clarit
 - **2 组对比**：用同色系深浅（如 `PALETTE[0]` + `PALETTE_LIGHT[0]`），不要用两种完全不同的颜色
 - **3-5 组对比**：用 PALETTE 前 3-5 色，饱和度统一
 - **单组多类别**：用同一色系的渐变（如从 `PALETTE[0]` 到 `PALETTE_LIGHT[0]` 的 n 个梯度），不要每根柱子一个颜色
-- **⛔ 禁止**：plt.cm 渐变色、matplotlib 默认蓝色、超过 6 种不同颜色
+- **⛔ 禁止**：plt.cm 渐变色、matplotlib 默认蓝色、无语义依据地增加分类色
 
 ### 折线图（Line Chart）
 - **2-3 条线**：用高对比色（如 PALETTE[0] 实线 + PALETTE[1] 虚线），线宽 2pt，加标记点
@@ -216,33 +216,13 @@ Not every "upgrade" is appropriate. Check this table, but choose based on clarit
 
 ## 配色方案
 
-### ★ 默认：裸调 `setup_style()`，不要传 palette 参数
+### 项目配色
 
-```python
-setup_style()   # ← 就这样，不带参数
-```
-
-**为什么不传参数：** `setup_style()` 不带参数时进入「自动去指纹随机模式」——它按**当前工作区**的确定性种子，从内置的 29 套精选配色库里自动挑一套，并同步随机版式风格（边框/刻度/网格/线宽）和中文字体。效果是：
-
-- **同一篇论文内所有图表配色/风格统一**（同种子）；
-- **不同论文各不相同**（种子按工作区变）；
-- **重跑结果不变**（确定性，可复现，绝不用时间戳）。
-
-这正是防「不同队伍/不同论文图表撞脸」的核心机制。**⛔ 除非下面列出的特殊情况，否则一律裸调 `setup_style()`，不要自己指定 `palette='soft'`/`'npg'` 之类——那样会关掉自动随机，让所有论文退回同一套固定配色（同质化）。**
-
-### 什么时候才显式传 palette（例外）
-
-只有这几种情况才传具体配色名：
-
-1. **用户在前端手动指定了配色**：此时工作区 `CLAUDE.md` 会带 `MH_DATA_FIG_PALETTE=xxx` 标记，`setup_style()`（仍裸调）会自动读取并锁定该配色——**你不需要在代码里写 palette 参数**，读标记是库内部做的。
-2. **用户要求色盲无障碍**：`setup_style(palette='colorblind')`。
-3. **调试/复现某套特定配色**：临时传名字，正式出图前改回裸调。
-
-可用的配色名（供例外情况参考，正常出图无需关心）：`soft`（柔蓝珊瑚薄荷）、`journal`（低饱和莫兰迪，SCI 顶刊感）、`tableau`（10 色高区分度）、`npg`（自然科学鲜明对比）、`nejm`（统计/医学柔和）、`science`（IEEE/工程经典）、`colorblind`（无障碍）。传列表也行：`setup_style(palette=['#5B9BD5','#ED7D7D',...])`。
+裸调 `setup_style()` 读取 `.vivid/config.json`，默认取 `palettes.json` 的默认项；不按目录名抽签。七套配色只有 `palettes.json` 一处定义，用户显式选择、自定义顺序和版式优先。色盲无障碍需求可提供经确认的自定义颜色列表。
 
 ### 用色规范（不管哪套配色都适用）
 
-- 代码里用色一律引用 `PALETTE[0]`、`PALETTE[1]`… 和 `COLORS['primary']` 等**语义变量**，它们会随 `setup_style()` 选中的配色自动变化。**⛔ 绝不硬编码十六进制色值**（如 `color='#5B9BD5'`），硬编码会绕过随机、造成跨论文撞色。
+- 代码里用色一律引用 `PALETTE[0]`、`PALETTE[1]`… 和 `COLORS['primary']` 等**语义变量**，它们会随 `setup_style()` 选中的配色自动变化。**⛔ 绝不硬编码十六进制色值**（如 `color='#5B9BD5'`），硬编码会绕过项目选择。
 - **⛔ 绝不用 matplotlib 默认色** `#1f77b4`（那种"默认蓝"是最明显的"没调过样式"信号）。
 - **渐变色（热力图/填充）**：用 `cmap='coolwarm'`（红蓝对比柔和版）或 `cmap='YlOrRd'`（暖色渐变），不要用 `jet` 或 `RdBu_r`（太深沉）。
 
@@ -747,7 +727,7 @@ TikZ 画出来丑的根本原因：没有颜色分层、没有分阶段色块、
 
 - 模板 1 的场景 → 用模板 4 或模板 9
 - 模板 2 的场景 → 用模板 10（管道式）
-- 模板 3 的场景 → Claude 自由画架构图，遵守防遮挡规则即可
+- 模板 3 的场景 → 助手 自由画架构图，遵守防遮挡规则即可
 
 ### 模板 4：通用研究技术路线图（所有论文类型通用）
 
@@ -969,7 +949,7 @@ All schemes share the same structural rules: white background, dashed boxes, rou
 \end{figure}
 ```
 
-**架构要点（Claude 画技术路线图时必须遵循）：**
+**架构要点（助手 画技术路线图时必须遵循）：**
 1. **不依赖 `backgrounds` 和 `fit` 库**——只用 `tikz` + `arrows.meta` + `positioning` + `shapes.geometric` + `calc`
 2. **不要灰色大背景 `\fill`**——白底最安全，不会出现黑色外围
 3. 虚线框用 `dashbox` 样式（手动坐标 + minimum width/height），极浅灰填充 `rgb(248,249,250)`

@@ -1,9 +1,4 @@
----
-name: modeling-plot-suite
-description: Manifest-driven router for mathematical-modeling competition figures. Reproduces the planning-to-render flow, routes each planned figure to the correct renderer, reconciles missing outputs, and audits final LaTeX size and page appearance.
----
-
-# Modeling Plot Suite
+# 绘图入口
 
 Use the pattern: classify upstream, record a machine-readable contract, execute the core render passes, then reconcile and audit. Do not choose a renderer from visual taste alone and do not load every drawing workflow.
 
@@ -17,9 +12,9 @@ Use the pattern: classify upstream, record a machine-readable contract, execute 
    - ILLUSTRATION -> `paper-illustration` only for qualifying pictorial or 3-D physical/engineering scenes;
    - HTML -> only when the user explicitly selects HTML instead of Draw.io;
    - MERMAID -> only when Mermaid or text-native maintainability is requested.
-4. For each non-empty class, read `workflows/<name>.md`, then its linked `references/<name>.md`, completely and preserve its drawing methods and templates. Review scope, timing and repair limits follow `../stage8-policy.md`; legacy review loops do not add extra rounds.
+4. For each non-empty class, read `workflows/<name>.md`, then its linked `references/<name>.md`, completely and preserve its drawing methods and templates. Review scope, timing and repair limits follow `../review-policy.md`; legacy review loops do not add extra rounds.
 5. Reconcile the manifest after every pass. A missing planned output keeps the task open; retry or use only the documented fallback for that class. Never silently reclassify a missing figure.
-6. For paper-bound figures, read `references/paper-layout-gate.md`; apply its size guidance with review scope and timing governed by `../stage8-policy.md`. Inspect individual figures during drawing and compiled pages after paper layout; a figures-only request does not require a compiled paper.
+6. For paper-bound figures, read `references/paper-layout-gate.md`; apply its size guidance with review scope and timing governed by `../review-policy.md`. Inspect individual figures during drawing and compiled pages after paper layout; a figures-only request does not require a compiled paper.
 
 When uncertain whether something is a data curve or a TikZ construction, classify it as DATA. Route all non-data diagrams that require exact, reproducible structure to `paper-technical-diagram`, then choose Draw.io or TikZ internally. AI illustration must not replace evidence plots, engineering schematics that can be drawn deterministically, precise topology, or mathematical geometry.
 

@@ -10,7 +10,7 @@ EXIT_CODE=0
 #   历史 bug：本脚本裸用 python3 跑内嵌检查，stub 环境下检查没真跑却因退出码非0 触发 EXIT_CODE=1，
 #   且 2>/dev/null 吞掉 stub 提示 → AI 看到 "(see above)" 后空无一物 → 死循环。与 compile_utils.sh 对齐。
 PYTHON=""
-for _py in "$MH_PYTHON" python python3 py; do
+for _py in "$VIVID_PYTHON" python python3 py; do
     [ -z "$_py" ] && continue
     if command -v "$_py" >/dev/null 2>&1 && "$_py" -c "import sys" >/dev/null 2>&1; then
         PYTHON="$_py"
@@ -59,7 +59,7 @@ if [ -f "$PAPER_DIR/main.log" ]; then
     font_err=$(grep -c 'Font.*not found\|cannot find font' "$PAPER_DIR/main.log" 2>/dev/null || echo 0)
     [ "$font_err" -gt 0 ] && echo "  WARN: $font_err font errors (check fc-list)"
 
-    # Extract specific error locations for Claude to fix
+    # Extract specific error locations for 助手 to fix
     if [ "$LATEX_ERRORS" -gt 0 ]; then
         echo ""
         echo "  ============================================================"

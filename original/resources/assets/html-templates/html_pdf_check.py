@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """HTML→PDF 产物专属质检 — paper-figure-html skill 用。
 
-screenshot_capture.py 用 Electron printToPDF 出 PDF。本脚本对产出的 PDF 做
+render_html.py 用 Chrome printToPDF 出 PDF。本脚本对产出的 PDF 做
 4 项 HTML/PDF 专属检查，堵住「HTML 画图 → 转 PDF」这条链路特有的坑：
 
   1. 单页检测（最关键）：printToPDF 内容超一页会分页，而 LaTeX \\includegraphics

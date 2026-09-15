@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "default": "olive-apricot",
+  "palettes": {
+    "coral-teal": {
+      "name": "珊瑚青绿",
+      "colors": [
+        "#4ECDC4",
+        "#FF6B6B",
+        "#45B7D1",
+        "#F7A072",
+        "#A06CD5",
+        "#F79256",
+        "#7DCFB6"
+      ]
+    },
+    "olive-apricot": {
+      "name": "橄榄杏棕",
+      "colors": [
+        "#606C38",
+        "#DDA15E",
+        "#BC6C25",
+        "#4A5A2B",
+        "#A68A64",
+        "#7F4F24",
+        "#936639"
+      ]
+    },
+    "blue-pink": {
+      "name": "蓝粉浅彩",
+      "colors": [
+        "#6797C7",
+        "#91ACC7",
+        "#A494C2",
+        "#D7979C",
+        "#99999F"
+      ]
+    },
+    "blue-sky": {
+      "name": "蓝天绿地",
+      "colors": [
+        "#377EB8",
+        "#B23648",
+        "#DC7369",
+        "#D8EBCD",
+        "#F8EFB5",
+        "#DAD4B9",
+        "#C8CDCF",
+        "#E1F3FA"
+      ]
+    },
+    "soft-forest": {
+      "name": "柔绿森林",
+      "colors": [
+        "#B8DBB3",
+        "#86BC79",
+        "#71A682",
+        "#81989B",
+        "#D19246",
+        "#B5AF8B",
+        "#7EA4B6",
+        "#4A4F7E"
+      ]
+    },
+    "pastel-girl": {
+      "name": "粉彩少女",
+      "colors": [
+        "#B6B3D6",
+        "#CFCCE3",
+        "#D5D3DE",
+        "#D5D1D1",
+        "#F6DFD6",
+        "#F8B2A2",
+        "#F1837A",
+        "#E9687A"
+      ]
+    },
+    "ocean-breeze": {
+      "name": "海洋清风",
+      "colors": [
+        "#BFDFD2",
+        "#51999F",
+        "#4198AC",
+        "#7BC0CD",
+        "#DBCB92",
+        "#ECB66C",
+        "#EA9E58",
+        "#ED8D5A"
+      ]
+    }
+  }
+}

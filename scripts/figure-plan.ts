@@ -15,13 +15,14 @@ export function figurePlanErrors(plan: any, minimum = 8): string[] {
   if (data.length < Math.max(8, minimum)) errors.push(`DATA requires at least ${Math.max(8, minimum)} distinct figures (PDF/PNG and panels do not count separately)`);
   const ids = new Set(), types = new Map<string, number>();
   for (const f of figures) {
-    if (!/^(fig_|tikz_)[a-z0-9_]+$/.test(f.id ?? '') || ids.has(f.id)) errors.push(`Invalid or duplicate figure id: ${f.id}`);
+    if (!/^(fig_|tikz_|TABLE_)[a-z0-9_]+$/.test(f.id ?? '') || ids.has(f.id)) errors.push(`Invalid or duplicate figure id: ${f.id}`);
     ids.add(f.id);
     for (const k of ['chartType', 'reason', 'message', 'section', 'question', 'layout']) if (typeof f[k] !== 'string' || !f[k].trim()) errors.push(`${f.id}: missing ${k}`);
-    if (!['DATA','DRAWIO','TIKZ'].includes(f.class)) errors.push(`${f.id}: class must be DATA/DRAWIO/TIKZ`);
+    if (!['DATA','TABLE','DRAWIO','TIKZ','ILLUSTRATION','HTML','MERMAID'].includes(f.class)) errors.push(`${f.id}: unsupported renderer class`);
     if (!/^(basic|advanced|empirical|competition|academic)\s*#\s*\d+$|^recipe:[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$|^custom$/.test(f.recipe ?? '')) errors.push(`${f.id}: recipe must be recipe:<id>, category #N or custom`);
     if (!Array.isArray(f.sources) || !f.sources.length) errors.push(`${f.id}: sources required`);
-    if (!Array.isArray(f.outputs) || !f.outputs.includes(`figures/${f.id}.pdf`)) errors.push(`${f.id}: outputs must include figures/${f.id}.pdf`);
+    const extensions: Record<string, string[]> = { DATA:['pdf','png','svg'], TABLE:['tex','md','csv','html'], DRAWIO:['pdf','png','svg'], TIKZ:['pdf','png','svg'], ILLUSTRATION:['png','jpg','webp'], HTML:['html','pdf','png'], MERMAID:['mmd','pdf','svg','png'] };
+    if (!Array.isArray(f.outputs) || !f.outputs.some((p: string) => (extensions[f.class] ?? []).some(ext => p === `figures/${f.id}.${ext}`))) errors.push(`${f.id}: outputs must include a supported artifact for its renderer`);
     if (!(f.finalWidthMm > 0)) errors.push(`${f.id}: finalWidthMm required`);
     if (f.class === 'DATA') {
       const type = (f.chartType ?? '').trim().toLowerCase(); types.set(type, (types.get(type) ?? 0) + 1);
@@ -40,7 +41,7 @@ export function figurePlanErrors(plan: any, minimum = 8): string[] {
   return errors;
 }
 export async function validateFigurePlan(cwd: string, planPath: string) {
-  const policyPath = join(cwd, '.hajimi/figure-plan-policy.json');
+  const policyPath = join(cwd, '.vivid/figure-plan-policy.json');
   const policy = JSON.parse(await readFile(policyPath, 'utf8').catch(() => '{"minimum":8}'));
   const text = await readFile(local(cwd, planPath), 'utf8'), plan = JSON.parse(text);
   const errors = figurePlanErrors(plan, policy.minimum ?? 8);
@@ -53,8 +54,6 @@ export async function validateFigurePlan(cwd: string, planPath: string) {
 }
 export async function beginFigurePlan(cwd: string, minimum = 8) {
   if (!Number.isInteger(minimum) || minimum < 8) throw new Error('Minimum must be an integer >=8; raise only for an explicit user request');
-  await writeFile(join(cwd, '.hajimi/figure-plan-policy.json'), JSON.stringify({ required: true, minimum }, null, 2));
-  return 'Read source material and bundled upstream-planning.md, then write FIGURE_PLAN.json. Stage completion validates the plan automatically; shell and repair commands stay available.';
+  await writeFile(join(cwd, '.vivid/figure-plan-policy.json'), JSON.stringify({ required: true, minimum }, null, 2));
+  return 'Read source material and bundled upstream-planning.md, then write FIGURE_PLAN.json. Run figure-plan-cli.mjs validate explicitly before rendering; shell and repair commands stay available.';
 }
-/** Legacy API: planning is advisory; commands are always available. */
-export async function requireFigurePlan(_cwd: string) {}

@@ -59,7 +59,7 @@ if [ -f "$PAPER_DIR/references.bib" ]; then
         [ -f "$_c" ] && { _BIBCHK="$_c"; break; }
     done
     if [ -n "$_BIBCHK" ]; then
-        _PY=""; for _p in "$MH_PYTHON" python python3; do [ -z "$_p" ] && continue; command -v "$_p" >/dev/null 2>&1 && { _PY="$_p"; break; }; done; [ -z "$_PY" ] && _PY=python
+        _PY=""; for _p in "$VIVID_PYTHON" python python3; do [ -z "$_p" ] && continue; command -v "$_p" >/dev/null 2>&1 && { _PY="$_p"; break; }; done; [ -z "$_PY" ] && _PY=python
         echo "--- References authenticity ---"
         "$_PY" "$_BIBCHK" --bib "$PAPER_DIR/references.bib" 2>&1
         [ $? -eq 1 ] && { echo "  FAIL: 参考文献真实性核验发现疑似编造条目（见上）"; EXIT_CODE=1; }
@@ -425,7 +425,7 @@ meta_leaks=0
 for f in "$PAPER_DIR"/sections/*.tex; do
     [ -f "$f" ] || continue
     bn=$(basename "$f")
-    leaks=$(grep -ciP 'RESULTS\.md|CLAUDE\.md|MODELING_REPORT|PROBLEM_ANALYSIS|figures/\*\.json|latex_includes|参赛者|参赛队伍|参赛选手' "$f" 2>/dev/null); leaks=${leaks:-0}
+    leaks=$(grep -ciP 'RESULTS\.md|\.vivid/config\.json|MODELING_REPORT|PROBLEM_ANALYSIS|figures/\*\.json|latex_includes|参赛者|参赛队伍|参赛选手' "$f" 2>/dev/null); leaks=${leaks:-0}
     if [ "$leaks" -gt 0 ]; then
         echo "  FAIL $bn: $leaks 处内部指令/文件名泄露到正文"
         meta_leaks=$((meta_leaks + leaks))

@@ -1,24 +1,24 @@
 # AI 工具使用声明 —— 生成规范（comp-paper 系列共用）
 
-> 仅当 `CLAUDE.md` 含 `MH_AI_DISCLOSURE=used` 或 `=none` 时才执行本规范；否则整步跳过、不产任何声明内容（对现有出稿零影响）。
+> 仅当 `.vivid/config.json` 含 `ai_disclosure=used` 或 `=none` 时才执行本规范；否则整步跳过、不产任何声明内容（对现有出稿零影响）。
 
 ## 0. 读取开关与日期区间
 
 ```bash
 AI_DISC=off
-grep -q 'MH_AI_DISCLOSURE=used' CLAUDE.md 2>/dev/null && AI_DISC=used
-grep -q 'MH_AI_DISCLOSURE=none' CLAUDE.md 2>/dev/null && AI_DISC=none
+[ "$(python _utils/vivid_config.py get ai_disclosure)" = "used" ] && AI_DISC=used
+[ "$(python _utils/vivid_config.py get ai_disclosure)" = "none" ] && AI_DISC=none
 echo "AI_DISC=$AI_DISC"
 ```
 
 `AI_DISC=off` → 跳过本步。`=none` → 只做第 2 节。`=used` → 做第 3 节全部。
 
-**日期区间**（仅 used 需要）：从 CLAUDE.md 取比赛起止，用 python 在区间内随机生成几个日期（**只到日、不带时间**）。python 跨平台稳，别用 bash 手算日期：
+**日期区间**（仅 used 需要）：从 .vivid/config.json 取比赛起止，用 python 在区间内随机生成几个日期（**只到日、不带时间**）。python 跨平台稳，别用 bash 手算日期：
 
 ```bash
-PYTHON=""; for _c in "$MH_PYTHON" python python3; do [ -z "$_c" ] && continue; if $_c -c "import sys" >/dev/null 2>&1; then PYTHON="$_c"; break; fi; done; [ -z "$PYTHON" ] && PYTHON=python
-DS=$(grep -oP 'MH_AI_DISC_DATE_START=\K[0-9-]+' CLAUDE.md 2>/dev/null | head -1)
-DE=$(grep -oP 'MH_AI_DISC_DATE_END=\K[0-9-]+' CLAUDE.md 2>/dev/null | head -1)
+PYTHON=""; for _c in "$VIVID_PYTHON" python python3; do [ -z "$_c" ] && continue; if $_c -c "import sys" >/dev/null 2>&1; then PYTHON="$_c"; break; fi; done; [ -z "$PYTHON" ] && PYTHON=python
+DS=$(python _utils/vivid_config.py get ai_disclosure_date_start)
+DE=$(python _utils/vivid_config.py get ai_disclosure_date_end)
 $PYTHON - "$DS" "$DE" <<'PY'
 import sys, random
 from datetime import date, timedelta

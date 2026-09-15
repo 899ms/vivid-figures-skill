@@ -43,25 +43,17 @@ def resolve():
         "draw.io.exe", "drawio", "draw.io",
     ])
     managed_python = first_existing([
-        os.environ.get("MH_PYTHON"),
-    ])
-    capture_js = first_existing([
-        os.environ.get("HAJIMI_CAPTURE_JS"),
-    ])
-    capture_electron = first_existing([
-        os.environ.get("HAJIMI_CAPTURE_ELECTRON"),
+        os.environ.get("VIVID_PYTHON"),
     ])
     return {
         "python": str(Path(sys.executable).resolve()),
-        "managed_python": managed_python,
+        "configured_python": managed_python,
         "chrome": chrome,
         "drawio": drawio,
         "mmdc": first_existing(["mmdc.cmd", "mmdc"]),
         "node": first_existing(["node.exe", "node"]),
         "xelatex": first_existing(["xelatex.exe", "xelatex"]),
-        "bash": first_existing(["bash.exe", "bash"]),
-        "capture_electron": capture_electron,
-        "capture_js": capture_js,
+        "bash": first_existing([os.environ.get("VIVID_BASH"), program_files / "Git/bin/bash.exe", program_files / "Git/usr/bin/bash.exe", "bash"]),
     }
 
 

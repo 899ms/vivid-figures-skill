@@ -87,7 +87,7 @@ Skill 会先结合数据和你想表达的内容，在全库说明卡中寻找�
 | 文件或目录 | 作用 |
 |---|---|
 | `SKILL.md` | AI 进入这个 Skill 时读取的总入口 |
-| `color-selection.md` | 配色选项，以及什么时候询问用户 |
+| `color-selection.md` | 配色选项、默认值及项目配置用法 |
 | `figure-selection.md` | 如何理解数据、查候选卡片并查看实图 |
 | `template-fidelity.md` | 如何在完整源码底稿上适配、保留特点和核对差异 |
 | `catalog/` | 109 张说明卡、精简目录及预览与来源快照 |
@@ -95,7 +95,7 @@ Skill 会先结合数据和你想表达的内容，在全库说明卡中寻找�
 | `original/` | 保留的原绘图指导、108 个配方和辅助脚本 |
 | `requirements.txt` | Python 依赖清单 |
 | `scripts/` | 完整图集规划工具，以及可选的只读数据摘要脚本 |
-| `examples/palette-showcase/` | README 示例的数据和绘图脚本 |
+| `examples/palette-posters/` | README 示例的数据和绘图脚本 |
 | `CHANGELOG.md` | 每次更新做了什么 |
 
-任务目录中可能出现 `.codex-plot-runtime.json`。这只是工具保存可执行文件路径的兼容文件名，使用这个仓库不要求安装 Codex 或 HaJiMi。
+任务目录中可能出现 `.vivid/runtime.json`。它保存当前 Python 和渲染工具路径；项目配色等设置保存在 `.vivid/config.json`。

@@ -22,7 +22,7 @@ assert points[:,:,0].min()>=-.3 and points[:,:,0].max()<=23
 assert points[:,:,1].min()>=-1 and points[:,:,1].max()<=16.5
 assert np.array(data['distributions'])[:5].min()>=15 and np.array(data['distributions'])[:5].max()<=83
 audit=json.loads((OUT/'render-info.json').read_text(encoding='utf-8'))
-palette_doc=(REPO/'color-selection.md').read_text(encoding='utf-8')
+palettes=json.loads((REPO/'original/resources/assets/shared-scripts/palettes.json').read_text(encoding='utf-8'))['palettes']
 results=[]
 for item in audit:
     slug=item['slug']
@@ -37,7 +37,7 @@ for item in audit:
     points=np.array(samples['scatter'])
     assert points[:,:,0].min()>=-.3 and points[:,:,0].max()<=23
     assert points[:,:,1].min()>=-1 and points[:,:,1].max()<=16.5
-    colors=re.findall(r'#[0-9A-Fa-f]{6}',next(row for row in palette_doc.splitlines() if row.startswith('| '+item['name'])))
+    colors=palettes[slug]['colors']
     assert item['base_colors']==colors
     assert item['data_sha256']==sample_hash
     with Image.open(OUT/f'{slug}.png') as img:

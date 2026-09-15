@@ -5,11 +5,11 @@
 tikz_file="${1:-figures/tikz_architecture_examples.tex}"
 [ -f "$tikz_file" ] || { echo "TikZ 文件不存在: $tikz_file，跳过"; exit 0; }
 
-# ⛔ 解析可用 Python：优先用后端注入的 $MH_PYTHON（已排除 Windows 商店占位符 python3）。
+# ⛔ 解析可用 Python：优先用初始化提供的 $VIVID_PYTHON（已排除 Windows 商店占位符 python3）。
 # 直接裸用 python3 在 Win10/11 上会命中商店占位符——它不执行代码、-c 时非0退出，
 # 导致下面的几何检测全空转还虚增 critical。所以挑一个能真正跑 import 的解释器。
 PYTHON=""
-for _cand in "$MH_PYTHON" python python3 "py -3"; do
+for _cand in "$VIVID_PYTHON" python python3 "py -3"; do
     [ -z "$_cand" ] && continue
     if $_cand -c "import sys" >/dev/null 2>&1; then PYTHON="$_cand"; break; fi
 done
@@ -44,10 +44,10 @@ fi
 #   \node[fill=gray!8,...,black]{图例}  → 黑底 + 黑字 = 一整条纯黑块（图例文字全看不见）
 # 正确写法：设文字色用 text=black（不碰 fill）。此检测抓 fill= 之后的裸颜色名。
 # ⛔ 用 quoted heredoc（'PYEOF'）原样喂 Python，避开 python -c 双引号里 \node \d \{ 的转义地狱；
-#    文件路径经环境变量 MH_TIKZ_FILE 传入（不拼进代码，防路径含特殊字符/注入）。
-legend_black=$(MH_TIKZ_FILE="$tikz_file" $PYTHON 2>/dev/null << 'PYEOF'
+#    文件路径经环境变量 VIVID_TIKZ_FILE 传入（不拼进代码，防路径含特殊字符/注入）。
+legend_black=$(VIVID_TIKZ_FILE="$tikz_file" $PYTHON 2>/dev/null << 'PYEOF'
 import re, os
-tex = open(os.environ['MH_TIKZ_FILE'], encoding='utf-8', errors='ignore').read()
+tex = open(os.environ['VIVID_TIKZ_FILE'], encoding='utf-8', errors='ignore').read()
 BARE = re.compile(r'^(black|white|red|blue|green|gray|grey|cyan|magenta|yellow|orange|violet|purple|brown|teal|indigo|olive|pink|lime)(!\d+(!\w+)?)?$')
 bad = 0
 for m in re.finditer(r'\\node\[((?:[^\][]|\{[^}]*\})*)\]', tex, re.S):

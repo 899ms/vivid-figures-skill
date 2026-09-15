@@ -27,6 +27,7 @@ REPO = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO / 'original/resources/assets/shared-scripts'))
 import plot_utils as pu
+import vivid_config as vc
 
 OPTIONS = [('coral-teal', '珊瑚青绿', 'CORAL & TEAL'),
            ('olive-apricot', '橄榄杏棕', 'OLIVE & APRICOT'),
@@ -187,7 +188,7 @@ def render(output, selected=None):
     for path in (HERE/'sources').glob('*.md'):
         source=re.findall(r'```python\s*\n(.*?)```',path.read_text(encoding='utf-8'),re.S)[0]
         path.with_suffix('.py').write_text(source,encoding='utf-8')
-    doc=(REPO/'color-selection.md').read_text(encoding='utf-8')
+    palettes=vc.registry()["palettes"]
     fonts={f.name for f in fontManager.ttflist}
     cjk=next((f for f in ['Microsoft YaHei','Noto Sans CJK SC','PingFang SC','SimHei'] if f in fonts),None)
     if not cjk: raise RuntimeError('Install a CJK font before rendering these Chinese posters.')
@@ -199,12 +200,11 @@ def render(output, selected=None):
             os.chdir(tmp)
             for slug,name,english in OPTIONS:
                 if selected and slug not in selected: continue
-                row=next(row for row in doc.splitlines() if row.startswith('| '+name))
-                base=re.findall(r'#[0-9a-fA-F]{6}',row)
+                base=list(palettes[slug]['colors'])
                 assert len(base) in (5,7,8)
                 data,data_hash=(data8,hash8) if len(base)==8 else (data7,hash7)
                 n=len(data['scatter'])
-                Path('CLAUDE.md').write_text('<!-- MH_DATA_FIG_PALETTE=custom -->\n<!-- MH_DATA_FIG_COLORS='+','.join(base)+' -->\n<!-- MH_DATA_FIG_STYLE=clean_open -->\n',encoding='utf-8')
+                vc.write_config(tmp, palette=slug, style='clean_open')
                 pu.setup_style()
                 assert pu.PALETTE==base
                 colors=list(pu.PALETTE)

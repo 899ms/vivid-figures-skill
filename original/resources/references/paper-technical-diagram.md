@@ -1,13 +1,6 @@
----
-name: paper-technical-diagram
-description: "Generate deterministic non-data diagrams for papers with Draw.io and TikZ, including engineering, physical, geometric, architecture, process, scheduling, and network diagrams."
-argument-hint: [figure-plan-or-data-path]
-allowed-tools: Bash(*), Read, Write, Edit, Grep, Glob, Agent
----
-
 # Paper Technical Diagram — Draw.io/TikZ (Non-Data Diagram Engine)
 
-Generate deterministic technical, engineering, physical, geometric, architecture, process, and network diagrams with Draw.io or TikZ for: **$ARGUMENTS**
+Generate deterministic technical, engineering, physical, geometric, architecture, process, and network diagrams with Draw.io or TikZ for: 用户提供的数据与绘图要求
 
 This is a **lightweight sub-step** split from paper-figure. It ONLY handles non-data diagrams (DrawIO + TikZ). Data figures (matplotlib/seaborn) were already generated in the previous paper-figure step.
 
@@ -15,7 +8,7 @@ This is a **lightweight sub-step** split from paper-figure. It ONLY handles non-
 
 ```bash
 FAST_MODE=0
-grep -q 'MH_FAST_MODE=1' CLAUDE.md 2>/dev/null && FAST_MODE=1
+[ "$(python _utils/vivid_config.py get fast_mode)" = "1" ] && FAST_MODE=1
 echo "FAST_MODE=$FAST_MODE"
 ```
 
@@ -166,32 +159,9 @@ echo "=== TikZ plan ==="
 grep -E 'TikZ-[0-9]|模型架构|变量关系|因果路径|算法流程|几何示意' "$PLAN_DOC" 2>/dev/null || echo "No TikZ plan found"
 echo ""
 echo "=== GPT Image failures (need DrawIO fallback) ==="
-# 读取前一步 paper-figure 持久化的 GPT Image 状态
-if [ -f figures/_gptimg_status.txt ]; then
-    GPTIMG_STATUS=$(cat figures/_gptimg_status.txt)
-    echo "GPT Image status: $GPTIMG_STATUS"
-    if [ "$GPTIMG_STATUS" = "ALL_SUCCESS" ]; then
-        echo "All GPT Image figures succeeded — only generate DrawIO for figures NOT covered by GPT Image"
-    elif [ "$GPTIMG_STATUS" = "SOME_FAILED" ]; then
-        GPTIMG_FAILED=$(cat figures/_gptimg_failed.txt 2>/dev/null)
-        echo "GPT Image failures: $GPTIMG_FAILED — generate DrawIO for these"
-    elif [ "$GPTIMG_STATUS" = "ALL_FAILED" ]; then
-        echo "All GPT Image attempts failed (API Key missing or network error) — generate DrawIO for ALL non-data figures"
-    else
-        echo "GPT Image disabled — generate DrawIO for ALL non-data figures"
-    fi
-else
-    echo "No GPT Image status file — generate DrawIO for ALL non-data figures (default)"
-fi
-echo ""
+# 按规划中的 DRAWIO/TIKZ 分类生成，不读取旧插图工具状态。
 # Determine language（注意：comp_apmcm_zh 是中文赛项，必须先排除）
-if grep -qi 'comp_apmcm_zh' "$PLAN_DOC" CLAUDE.md 2>/dev/null; then
-    DRAWIO_LANG="zh"
-elif grep -qi 'MCM\|ICM\|APMCM\|comp_mcm\|comp_apmcm\|comp_certcup_en\|comp_shuwei_en\|语言.*English\|Language.*English' "$PLAN_DOC" CLAUDE.md 2>/dev/null; then
-    DRAWIO_LANG="en"
-else
-    DRAWIO_LANG="zh"
-fi
+DRAWIO_LANG=$(python _utils/vivid_config.py get language)
 echo "DrawIO language: $DRAWIO_LANG"
 ```
 
@@ -327,65 +297,9 @@ echo "... (参考完整 XML 结构后再生成)"
 [ -f figures/fig_roadmap.drawio ] && echo "✅ fig_roadmap.drawio created" || echo "❌ MISSING"
 ```
 
-### Step 4: Export to PDF + self-check + fix loop (⛔ 最多 3 轮)
+### Step 4: 导出与检查
 
-**每张 .drawio 文件必须经过：导出 → 自检 → 修复 → 重新导出的循环，最多 3 轮。**
-
-对每张 .drawio 文件，执行以下循环：
-
-```
-FOR each figures/*.drawio file:
-  FOR round = 1 to 3:
-    1. Export: draw.io.exe --export --format pdf --crop
-       ⛔ round=1 且 figures/${bn}.pdf 已存在（上面「批量并行导出」已导出）→ 跳过本次导出，直接进第 3 步自检
-          （避免把并行导出的成果又重导一遍。仅首轮跳过；自检失败改了 XML 后的后续轮必须重新导出）
-    2. If PDF not generated → check XML syntax (ID duplicate, unclosed tags, escaping), fix, CONTINUE to next round
-    3. Self-check the XML (Step 5 checklist below):
-       - Overlap check (x/y/width/height collision)
-       - Edge crossing check (jumpStyle, waypoints)
-       - Text overflow check (width vs char count)
-       - Spacing consistency
-       - Style consistency
-       - Size check (within page bounds)
-    4. If any check fails → fix the XML, CONTINUE to next round
-    5. If all checks pass → BREAK (this file is done)
-  END FOR
-  If still failing after 3 rounds → fallback to TikZ for this diagram
-END FOR
-```
-
-**⛔ 首次批量并行导出（省时，可选加速）：** 所有 `.drawio` 相互独立、无依赖，首次导出可并行——draw.io 多实例各自导到不同 `figures/${bn}.pdf`。并发度限 **2**（draw.io 是 Electron 应用，多实例并发偶发抢占用户配置/锁文件，2 是稳妥值）。每张仍挂 60s 超时。跑完后下面逐张循环首轮发现 PDF 已存在即跳过导出、直接自检，**只有自检失败重写 XML 后才对该张重新单独导出**（修复轮内绝不并行）。
-
-> ⚠ **兜底：并行导出是"锦上添花"，不是必须。** 若这段并行导出报错、卡住或某些图没导出成功，**不要纠结**——下面的逐张循环（Step 4 FOR each drawio）会对"缺 PDF 的图"自动补导（单张、可靠）。所以并行块只当"能快就快"，导出失败的交给逐张循环兜底，绝不阻塞。
-
-```bash
-_export_one() {
-  df="$1"; b=$(basename "$df" .drawio)
-  draw.io.exe --export --format pdf --crop --output "figures/${b}.pdf" "$df" >/dev/null 2>&1 &
-  _pid=$!
-  ( sleep 60 && kill $_pid 2>/dev/null ) & _tmr=$!
-  wait $_pid 2>/dev/null; kill $_tmr 2>/dev/null
-}
-_batch=0
-for df in figures/*.drawio; do
-  [ -f "$df" ] || continue
-  _export_one "$df" &                      # 整个导出函数后台并发
-  _batch=$((_batch+1))
-  [ $((_batch % 2)) -eq 0 ] && wait        # 每 2 张一批，控并发（draw.io 多实例稳妥值）
-done
-wait
-echo "✅ 首次批量并行导出完成（缺 PDF 的图会在下面逐张循环补导，导出失败不阻塞）"
-```
-
-**单张导出命令（修复轮内重导 / 批量遗漏补导用）：**
-```bash
-draw.io.exe --export --format pdf --crop --output "figures/${bn}.pdf" "$drawio_file" 2>&1 &
-DRAWIO_PID=$!
-( sleep 60 && kill $DRAWIO_PID 2>/dev/null && echo "⚠ timeout" ) &
-TIMER_PID=$!
-wait $DRAWIO_PID 2>/dev/null
-kill $TIMER_PID 2>/dev/null
-```
+使用 `python "<RES>/scripts/export_drawio.py" figures/fig_name.drawio --format pdf`。需要 PNG 预览时再使用 `--format png`。源码有更改时重新导出，成功的已有图不重复生成。修复次数以检查与修复规则为准。
 
 **自检清单（每轮都过一遍）：**
 
@@ -406,10 +320,10 @@ kill $TIMER_PID 2>/dev/null
 对技术路线图和求解流程图运行结构自检脚本。**如果不通过，必须读取示例文件参考后重写，然后重新导出+重新自检，最多 3 轮。**
 
 ```bash
-# 解析可用 Python：优先用后端注入的 $MH_PYTHON（已排除 Windows 商店占位符 python3），
+# 解析可用 Python：优先用初始化提供的 $VIVID_PYTHON（已排除 Windows 商店占位符 python3），
 # 否则在候选里挑一个能真正执行的——占位符跑 -c 会非0退出，自动被淘汰。
 PYTHON=""
-for _cand in "$MH_PYTHON" python python3 "py -3"; do
+for _cand in "$VIVID_PYTHON" python python3 "py -3"; do
     [ -z "$_cand" ] && continue
     if $_cand -c "import sys" >/dev/null 2>&1; then PYTHON="$_cand"; break; fi
 done
@@ -427,7 +341,7 @@ if [ -f figures/fig_roadmap.drawio ]; then
         if [ $ROUND -lt 3 ]; then
             echo "⛔ 不合格 — 读取示例后重写..."
             echo ">>> cat _utils/example_roadmap_stats.drawio 或 _utils/example_roadmap_hex.drawio 参考结构"
-            # Claude: 你必须在这里读取一个示例模板，修改 fig_roadmap.drawio，然后重新导出 PDF
+            # 助手: 你必须在这里读取一个示例模板，修改 fig_roadmap.drawio，然后重新导出 PDF
         else
             echo "⛔ 3 轮仍不合格 — 降级到 TikZ"
         fi
@@ -454,7 +368,7 @@ for flow in figures/fig_flow_*.drawio; do
 done
 ```
 
-**⛔ 关键：上面的 bash 脚本只是检测框架。Claude 在看到 `⛔ 不合格` 输出后，必须：**
+**⛔ 关键：上面的 bash 脚本只是检测框架。助手 在看到 `⛔ 不合格` 输出后，必须：**
 1. **`cat _utils/example_roadmap_stats.drawio` 或 `_utils/example_roadmap_hex.drawio`** 读取完整示例（4 个模板任选一个，与初次生成时所选模板保持一致）
 2. **重写 .drawio XML**（修复结构问题）
 3. **重新导出 PDF**（`draw.io.exe --export ...`）
@@ -463,82 +377,9 @@ done
 
 **不允许看到 CRITICAL 后跳过不修。**
 
-### Step 5.7: DrawIO 视觉自检（vision LLM，自动修复，⛔ 不阻塞）
+### Step 5.7:
 
-**结构自检（drawio_check.py）只看 XML 结构，看不出导出 PDF 后的真实视觉效果。这一步用 vision LLM 真正"看图"，检查文字溢出/节点重叠/连线穿越/布局松散/配色等结构检查发现不了的问题。最多 3 轮修复。**
-
-⛔ **执行原则（避免边缘问题）：**
-- **只对 DrawIO 产物跑**：遍历 `figures/*.drawio`，对每个取同名 `.pdf` 跑视觉自检；**不要对数据图 `gen_fig_*` 的 PDF 跑**（那是 matplotlib 图，不归这步管）。
-- **vision 不可用就跳过，绝不阻塞**：脚本退出码 `2` = API 未配置/PDF 无法转图/调用失败 → 直接跳过该图，继续后续流程。退出码 `0` = 通过，`1` = 有视觉问题需修复。
-- **这是加分项不是硬门槛**：3 轮仍未解决也继续往下走，不要卡在这里死循环。
-
-```bash
-# 解析可用 Python：优先用后端注入的 $MH_PYTHON（已排除 Windows 商店占位符 python3），
-# 否则在候选里挑一个能真正执行的——占位符跑 -c 会非0退出，自动被淘汰。
-PYTHON=""
-for _cand in "$MH_PYTHON" python python3 "py -3"; do
-    [ -z "$_cand" ] && continue
-    if $_cand -c "import sys" >/dev/null 2>&1; then PYTHON="$_cand"; break; fi
-done
-[ -z "$PYTHON" ] && PYTHON=python
-# ⛔ FAST_MODE 代码级门控（与 Step 7.5 一致，不靠散文让 AI 自行判断）：
-#   快速模式 → 清空待审列表，循环一次不进 = 跳过 DrawIO vision 多轮修复（省 API）。
-#   安全性：结构自检 drawio_check.py 已在 Step 5.5 执行（纯结构/几何，说重叠就是真重叠）→ 真翻车照样挡；
-#   本步 vision 只是审美加分项、本就"不阻塞"，跳过不影响最终 gate 结算。
-# ⛔ 块内自检 FAST_MODE（不依赖开头块的变量继承——本 skill 每个块都独立 detect PYTHON，
-#    说明块间不共享变量；FAST_MODE 若只在开头 detect，到这里会是空 → 门控失效、快速模式白设）。
-FAST_MODE=0; grep -q 'MH_FAST_MODE=1' CLAUDE.md 2>/dev/null && FAST_MODE=1
-# ⛔ 用户在高级选项【关闭】了流程图/TikZ 视觉质检 → 跳过 vision（复用 FAST_MODE 跳过路径；
-#    免费的 drawio_check 结构自检不在此 if 内，照常跑，不受影响）。
-grep -q 'MH_SKIP_DIAGRAM_VISION=1' CLAUDE.md 2>/dev/null && FAST_MODE=1
-DRAWIO_VISION_SRCS=(figures/*.drawio)
-if [ "$FAST_MODE" = "1" ]; then
-    echo "⚡ 快速模式：跳过 DrawIO vision 视觉自检修复循环（省 API）；结构自检 drawio_check.py 仍照跑。"
-    DRAWIO_VISION_SRCS=()
-fi
-mkdir -p _tmp
-for drawio_src in "${DRAWIO_VISION_SRCS[@]}"; do
-    [ -f "$drawio_src" ] || continue
-    bn=$(basename "$drawio_src" .drawio)
-    pdf="figures/${bn}.pdf"
-    [ -f "$pdf" ] || continue   # 没导出 PDF 的跳过（Step4 会处理导出）
-    # ⛔ 已判过 PASS 的不再调 vision（部分重跑/续跑时省额度；图一旦重画会重新入账重检）
-    grep -q "^${bn} PASS" _tmp/drawio_vision_passed.txt 2>/dev/null && { echo "⏭ $bn 已通过视觉自检，跳过"; continue; }
-    for VROUND in 1 2 3; do
-        echo "=== DrawIO 视觉自检: $bn (round $VROUND) ==="
-        VOUT=$($PYTHON _utils/drawio_vision_check.py "$pdf" 2>&1)
-        VEXIT=$?
-        echo "$VOUT"
-        if [ "$VEXIT" -eq 0 ]; then
-            echo "✅ $bn 视觉检查通过"
-            echo "$bn PASS" >> _tmp/drawio_vision_passed.txt
-            break
-        elif [ "$VEXIT" -eq 2 ]; then
-            echo "⚠ vision 不可用/无法判定，跳过 $bn 的视觉自检（不阻塞）"
-            break
-        fi
-        # VEXIT=1：有视觉问题
-        if [ "$VROUND" -lt 3 ]; then
-            echo "⛔ $bn 发现视觉问题，需读 XML 修复后重新导出..."
-            echo ">>> Vision 反馈见上方 ISSUE 列表"
-        else
-            echo "⚠ $bn 3 轮视觉自检仍有问题，继续（不阻塞流程）"
-        fi
-    done
-done
-```
-
-**⛔ 当某张图返回 `ISSUE`（VEXIT=1）时，你必须逐步执行修复（不是只跑上面的检测脚本）：**
-1. 用 **Read 工具**读取该图的 `.drawio` XML（如 `figures/fig_roadmap.drawio`）
-2. 根据 vision 反馈的每条 ISSUE 定位问题并修改 XML：
-   - "文字溢出/截断" → 加大节点 `width` 或缩短文字、加 `whiteSpace=wrap`
-   - "节点重叠/紧贴" → 调整 `x/y` 坐标拉开间距（同行边到边 ≥30px）
-   - "连线穿过节点" → 改走向、加 `jumpStyle=arc`、绕行
-   - "布局左对齐留白" → 重算居中坐标（左边距=(容器宽-内容宽)/2）
-   - "出现 HTML 代码/黑背景" → 检查 `html=1`、去掉 `shadow=1`、`background=none`
-3. **重新导出 PDF**：`draw.io.exe --export --format pdf --crop --output "figures/${bn}.pdf" "figures/${bn}.drawio"`
-4. 回到本步骤循环开头，对该图**重新跑 vision 自检**验证
-5. 重复直到通过或 3 轮用完（用完仍不过也继续，不阻塞）
+按 [检查与修复](../../review-policy.md) 逐张打开实际图件，完整检查文字、图例、色条、遮挡、裁切、数据表达和模板保真；先汇总问题再集中修复，修复后复查，轮次与停止条件只由该文件规定。静态检查不能代替实际看图。
 
 ### Step 6: Plan reconciliation loop (⛔ 缺一不可)
 
@@ -671,158 +512,9 @@ done
 
 **如果没有 TikZ 图需要生成 → 跳过此步骤。**
 
-### Step 7.5: TikZ 视觉自检（vision LLM，自动修复）
+### Step 7.5:
 
-**对每个编译成功的 TikZ PDF，用 vision LLM 检查布局质量。最多 3 轮修复。**
-
-**⛔ 本块任何模式都要执行（含快速模式）**：块内会自行 detect FAST_MODE——快速模式下清空待审列表使循环一次不进（跳 vision 省 API），但仍会执行 `rm -f` 清空标记文件、由最终 gate 跑几何自检。**不要因为是快速模式就整块不跑**，否则标记文件残留会让最终 gate 误判。
-
-**⛔ 如果 vision API 不可用（exit 2），跳过此步骤，不阻塞流程。**
-
-**⛔ 执行方式：这不是一个完整的 bash 脚本。你需要逐步执行：先运行 PDF→PNG + vision 检查，如果返回 ISSUE，你必须用 Read 工具读取 TikZ .tex 源码，根据 vision 反馈修改（调整坐标/间距/节点宽度/颜色），用 Write/Edit 工具写回，然后重新编译 xelatex，再重新检查。每轮都是：检查→修改→编译→再检查。**
-
-```bash
-# 解析可用 Python：优先用后端注入的 $MH_PYTHON（已排除 Windows 商店占位符 python3），
-# 否则在候选里挑一个能真正执行的——占位符跑 -c 会非0退出，自动被淘汰。
-PYTHON=""
-for _cand in "$MH_PYTHON" python python3 "py -3"; do
-    [ -z "$_cand" ] && continue
-    if $_cand -c "import sys" >/dev/null 2>&1; then PYTHON="$_cand"; break; fi
-done
-[ -z "$PYTHON" ] && PYTHON=python
-mkdir -p _tmp
-
-# ⛔ 关键：扫描所有 figures/*.pdf，找有对应 .tex 且含 \begin{tikzpicture} 的文件
-#    不只限 tikz_*.pdf 前缀，因为 AI 可能把 TikZ 图命名成 fig_xxx.pdf（如几何示意）
-#    这样无论 AI 怎么命名都能兜底自检
-TIKZ_PDFS=()
-for pdf in figures/*.pdf; do
-    [ -f "$pdf" ] || continue
-    bn=$(basename "$pdf" .pdf)
-    # ⛔ 只跳过"真的由 drawio 生成"的图（存在同名 .drawio，已在 Step 5.7 单独查）。
-    #    注意：不能仅凭 fig_arch/fig_flow 前缀就跳——AI 也可能用 TikZ 画架构/流程图
-    #    （有 fig_arch_xxx.tex + .pdf、没 .drawio）。那种若也被跳过，就 tikz 不查、
-    #    drawio 也够不着 → 两头裸奔。所以前缀命中还要叠加"确有 .drawio"才跳。
-    if [ -f "figures/${bn}.drawio" ]; then
-        continue
-    fi
-    # 同名 .tex 存在 + 含 tikzpicture → 是 TikZ 图
-    tex_candidate="figures/${bn}.tex"
-    if [ -f "$tex_candidate" ] && grep -q '\\begin{tikzpicture}' "$tex_candidate" 2>/dev/null; then
-        TIKZ_PDFS+=("$pdf")
-    elif [ "${bn#tikz_}" != "$bn" ]; then
-        # 备用：以 tikz_ 前缀命名的也算（即使 tex 不在标准位置）
-        TIKZ_PDFS+=("$pdf")
-    fi
-done
-
-if [ "${#TIKZ_PDFS[@]}" -eq 0 ]; then
-    echo "ℹ 未找到 TikZ 图 PDF（扫描 figures/*.pdf + 同名 .tex 含 tikzpicture），跳过视觉自检"
-else
-    echo "🔍 找到 ${#TIKZ_PDFS[@]} 张 TikZ 图，开始逐一视觉自检..."
-fi
-
-# ⛔ 两个标记文件把视觉自检的"真实结果"传给 Step 9 最终 gate：
-#    - vision_skipped.txt：因环境原因(PDF转换失败/脚本缺失/API不可用)根本没审过的图
-#    - vision_unresolved.txt：审了、报了问题、3轮没修好仍带瑕疵的图
-#    没有这两笔账，gate 只看静态几何(估算尺寸)就放行，遮挡会漏网。
-rm -f _tmp/vision_skipped.txt _tmp/vision_unresolved.txt
-
-# ⛔ FAST_MODE 代码级门控（不靠散文让 AI 自行判断 → 保证两个用户同配置行为一致、可复现）：
-#   快速模式 → 清空 TIKZ_PDFS，下面的循环一次都不进 = 跳过 vision 多轮修复（省 API）。
-#   为什么这样跳是安全的：
-#     1) 上面的 rm 已【无条件】清空两个标记文件 → 结算段读到空 → 不会被上一轮残留误判卡死；
-#     2) 几何自检 tikz_check.sh 在最终 gate（Step 9 QUALITY GATE）仍【无条件】执行 → 遮挡/越界/重叠类真翻车照样挡；
-#     3) 不往 vision_skipped.txt 记账（那文件是"环境故障没审成"语义）→ 结算段不会误报红牌。
-# ⛔ 块内自检 FAST_MODE（同 Step 5.7 理由：块间不共享变量，须就地 detect，否则门控失效）。
-FAST_MODE=0; grep -q 'MH_FAST_MODE=1' CLAUDE.md 2>/dev/null && FAST_MODE=1
-# ⛔ 用户在高级选项【关闭】了流程图/TikZ 视觉质检 → 跳过 vision（复用 FAST_MODE 跳过路径；
-#    免费的 drawio_check 结构自检不在此 if 内，照常跑，不受影响）。
-grep -q 'MH_SKIP_DIAGRAM_VISION=1' CLAUDE.md 2>/dev/null && FAST_MODE=1
-if [ "$FAST_MODE" = "1" ]; then
-    echo "⚡ 快速模式：跳过 TikZ vision 多轮视觉自检修复循环（省 API）；几何自检(tikz_check.sh)仍在最终 gate 执行。"
-    TIKZ_PDFS=()
-fi
-
-for tikz_pdf in "${TIKZ_PDFS[@]}"; do
-    bn=$(basename "$tikz_pdf" .pdf)
-    tikz_tex="figures/${bn}.tex"
-    [ -f "$tikz_tex" ] || tikz_tex="figures/tikz_diagrams.tex"
-
-    for VROUND in 1 2 3; do
-        echo "=== TikZ 视觉自检: $bn (round $VROUND) ==="
-
-        # PDF → PNG（尝试多种方式）
-        # ⛔ 首选 PyMuPDF(fitz)：纯 wheel、自带渲染引擎、不依赖系统 poppler，打包 runtime 必有。
-        #    pdftoppm/pdf2image 都依赖 poppler，打包环境常缺 → 两者皆败 → vision 曾被静默跳过
-        #    （真实翻车：figures/ 全是矢量 PDF、无 PNG，vision 工具拿不到图直接 exit2 空转）。
-        PNG_OK=0
-        $PYTHON -c "
-import fitz  # PyMuPDF
-d = fitz.open('$tikz_pdf')
-pix = d[0].get_pixmap(matrix=fitz.Matrix(200/72, 200/72))  # 200 DPI
-pix.save('_tmp/${bn}_vcheck.png')
-" 2>/dev/null && [ -f "_tmp/${bn}_vcheck.png" ] && PNG_OK=1
-        if [ "$PNG_OK" -eq 0 ] && command -v pdftoppm >/dev/null 2>&1; then
-            pdftoppm -png -r 200 -singlefile "$tikz_pdf" "_tmp/${bn}_vcheck" && PNG_OK=1
-        fi
-        if [ "$PNG_OK" -eq 0 ] && $PYTHON -c "from pdf2image import convert_from_path" 2>/dev/null; then
-            $PYTHON -c "
-from pdf2image import convert_from_path
-imgs = convert_from_path('$tikz_pdf', dpi=200, first_page=1, last_page=1)
-imgs[0].save('_tmp/${bn}_vcheck.png', 'PNG')
-" && PNG_OK=1
-        fi
-        if [ "$PNG_OK" -eq 0 ]; then
-            echo "🟥🟥🟥 $bn: 无法转换 PDF→PNG（PyMuPDF/pdftoppm/pdf2image 均不可用）——【本图未做视觉审查，遮挡类问题可能漏网】"
-            echo "   💡 修复建议：在工作区跑 \"\$PYTHON\" -m pip install pymupdf 后重试"
-            echo "$bn (PDF→PNG 转换失败)" >> _tmp/vision_skipped.txt
-            break
-        fi
-
-        # 定位 tikz_vision_check.py：先 _utils/（后端复制的），找不到就 fallback 到
-        # 工具原始目录 $MH_TOOLS_DIR（后端注入，指向发布包 tools/）。⛔ 不依赖单一位置，
-        # 免得"复制到 _utils/ 没触发"就静默跳过视觉自检（真实翻车：图裸奔到成品）。
-        VCHECK=""
-        for _cand in "_utils/tikz_vision_check.py" "${MH_TOOLS_DIR}/tikz_vision_check.py" "tools/tikz_vision_check.py"; do
-            [ -n "$_cand" ] && [ -f "$_cand" ] && { VCHECK="$_cand"; break; }
-        done
-        if [ -z "$VCHECK" ]; then
-            echo "🟥🟥🟥 $bn: 找不到 tikz_vision_check.py（_utils/ 与 \$MH_TOOLS_DIR 均无）——【本图未做视觉审查，遮挡类问题可能漏网】"
-            echo "$bn (找不到 tikz_vision_check.py)" >> _tmp/vision_skipped.txt
-            break
-        fi
-
-        # 调 vision LLM 检查
-        VRESULT=$($PYTHON "$VCHECK" "_tmp/${bn}_vcheck.png" 2>&1)
-        VEXIT=$?
-        echo "$VRESULT"
-
-        if [ "$VEXIT" -eq 0 ]; then
-            echo "✅ $bn 视觉检查通过"
-            break
-        elif [ "$VEXIT" -eq 2 ]; then
-            echo "🟥🟥🟥 $bn: Vision API 不可用（EDITOR_AI_API_KEY / OPENAI_API_KEY 未配置或调用失败）——【本图未做视觉审查，遮挡类问题可能漏网】"
-            echo "   💡 用户可在设置里配 vision API（editor_ai 或 reviewer）后享受自动检查"
-            echo "$bn (Vision API 不可用/调用失败)" >> _tmp/vision_skipped.txt
-            break
-        fi
-
-        # 有问题 → 修复
-        if [ $VROUND -lt 3 ]; then
-            echo "⛔ 发现视觉问题，读取 TikZ 源码修复..."
-            echo ">>> Vision 反馈: $VRESULT"
-            echo ">>> ⛔ 你必须立即：1.读取 $tikz_tex 2.根据上述反馈修改节点坐标/间距/宽度/颜色 3.重新编译 xelatex"
-            echo ">>> 常见修复：scale 不够大时加 \"scale=2.0\"；标注间距 < 0.5cm 时拉到 0.8cm+；rotate=90 长文字需要给 y 跨度留 1.5cm+"
-        else
-            # 3 轮仍有问题：不硬阻塞流程（避免个别图卡死整篇），但必须记账 → 交给 Step 9 gate 亮红牌
-            echo "🟥🟥🟥 $bn: 3 轮视觉自检仍有问题——【本图带瑕疵，最终 gate 将标记未通过】"
-            echo ">>> 最后一轮 Vision 反馈: $VRESULT"
-            echo "$bn (3轮未修好，最后反馈见日志)" >> _tmp/vision_unresolved.txt
-        fi
-    done
-done
-```
+按 [检查与修复](../../review-policy.md) 逐张打开实际图件，完整检查文字、图例、色条、遮挡、裁切、数据表达和模板保真；先汇总问题再集中修复，修复后复查，轮次与停止条件只由该文件规定。静态检查不能代替实际看图。
 
 ### Step 8: Update latex_includes.tex
 
@@ -916,115 +608,11 @@ DUPS=$(grep -oh '\\label{[^}]*}' figures/latex_includes.tex 2>/dev/null | sort |
 ```
 **如果有 ❌，立即修复（追加缺失的 include 或修复重复 label）。TikZ 的 ❌ 尤其不能放过。**
 
-### Step 9: Final quality gate
+### Step 9:
 
-```bash
-echo "=========================================="
-echo "  DRAWIO/TIKZ QUALITY GATE"
-echo "=========================================="
-GATE_FAIL=0
+对照 FIGURE_MANIFEST 检查每张 Draw.io/TikZ 图的可编辑源码和实际导出文件。运行 `scripts/drawio_check_compat.py`、`_utils/tikz_check.sh` 的适用检查。论文交付时核对引用片段。
 
-# DrawIO diagrams
-DRAWIO_COUNT=$(ls figures/*.drawio 2>/dev/null | wc -l)
-DRAWIO_PDF=0
-for df in figures/*.drawio; do
-    [ -f "$df" ] || continue
-    bn=$(basename "$df" .drawio)
-    [ -f "figures/${bn}.pdf" ] && DRAWIO_PDF=$((DRAWIO_PDF+1))
-done
-if [ "$DRAWIO_COUNT" -gt 0 ] && [ "$DRAWIO_PDF" -eq "$DRAWIO_COUNT" ]; then
-    echo "✅ DrawIO: $DRAWIO_COUNT .drawio files, all exported to PDF"
-elif [ "$DRAWIO_COUNT" -gt 0 ]; then
-    echo "❌ DrawIO: $DRAWIO_COUNT .drawio but only $DRAWIO_PDF PDFs"; GATE_FAIL=$((GATE_FAIL+1))
-else
-    echo "❌ No DrawIO diagrams generated"; GATE_FAIL=$((GATE_FAIL+1))
-fi
-
-# TikZ (if planned)
-if grep -qi 'tikz\|TikZ\|模型架构\|变量关系' PROBLEM_ANALYSIS.md 2>/dev/null; then
-    if ls figures/tikz_*.tex 2>/dev/null > /dev/null || [ -f figures/tikz_diagrams.tex ]; then
-        echo "✅ TikZ source files exist"
-        # Run tikz_check.sh on each TikZ file
-        for texfile in figures/tikz_*.tex figures/tikz_diagrams.tex; do
-            [ -f "$texfile" ] || continue
-            bash _utils/tikz_check.sh "$texfile" 2>/dev/null
-            TC_EXIT=$?
-            if [ "$TC_EXIT" -gt 0 ]; then
-                echo "❌ tikz_check.sh found $TC_EXIT CRITICAL issues in $(basename $texfile)"
-                GATE_FAIL=$((GATE_FAIL+1))
-            fi
-        done
-        # Check compiled PDFs exist
-        TIKZ_PDF=0
-        for tf in figures/tikz_*.tex figures/tikz_diagrams.tex; do
-            [ -f "$tf" ] || continue
-            bn=$(basename "$tf" .tex)
-            [ -f "figures/${bn}.pdf" ] && TIKZ_PDF=$((TIKZ_PDF+1))
-        done
-        [ "$TIKZ_PDF" -gt 0 ] && echo "✅ TikZ compiled PDFs: $TIKZ_PDF" || { echo "❌ TikZ source exists but no compiled PDF"; GATE_FAIL=$((GATE_FAIL+1)); }
-
-        # ⛔ 结算 Step 7.5 视觉自检的两笔账（静态几何 tikz_check.sh 抓不到的遮挡靠这里守门）：
-        #   - unresolved：审了、3轮没修好 → 计入 GATE_FAIL，硬拦
-        #   - skipped：环境原因根本没审 → 醒目警告 + 提示，不硬拦（免得缺 pdftoppm 就卡死全篇），但让用户看得见
-        if [ -s _tmp/vision_unresolved.txt ]; then
-            _n_unres=$(wc -l < _tmp/vision_unresolved.txt 2>/dev/null); _n_unres=${_n_unres:-0}
-            echo "❌ 视觉审查未通过 $_n_unres 张（3轮没修好，带遮挡/瑕疵）："
-            sed 's/^/     - /' _tmp/vision_unresolved.txt
-            GATE_FAIL=$((GATE_FAIL+_n_unres))
-        fi
-        if [ -s _tmp/vision_skipped.txt ]; then
-            _n_skip=$(wc -l < _tmp/vision_skipped.txt 2>/dev/null); _n_skip=${_n_skip:-0}
-            echo "🟥🟥🟥 警告：$_n_skip 张图【未做视觉审查】（仅过了静态几何检查，遮挡类问题可能漏网）："
-            sed 's/^/     - /' _tmp/vision_skipped.txt
-            echo "     → 想让这些图被真正审查：确认已配 vision API（editor_ai/reviewer），并确保工作区有 pdftoppm 或 pdf2image。"
-        fi
-    else
-        echo "❌ TikZ planned but no .tex files"; GATE_FAIL=$((GATE_FAIL+1))
-    fi
-fi
-
-# latex_includes.tex updated with DrawIO/TikZ entries
-if [ -s figures/latex_includes.tex ]; then
-    echo "✅ latex_includes.tex exists"
-    # 检查是否包含 DrawIO 图的 include
-    DRAWIO_IN_INCLUDES=$(grep -c 'fig_roadmap\|fig_flow\|fig_framework\|fig_pipeline\|fig_index\|fig_model\|fig_network\|fig_gantt\|tikz_' figures/latex_includes.tex 2>/dev/null); DRAWIO_IN_INCLUDES=${DRAWIO_IN_INCLUDES:-0}
-    if [ "$DRAWIO_IN_INCLUDES" -gt 0 ]; then
-        echo "✅ latex_includes.tex contains $DRAWIO_IN_INCLUDES DrawIO/TikZ entries"
-    else
-        echo "❌ latex_includes.tex exists but has NO DrawIO/TikZ entries — paper will miss diagrams"
-        GATE_FAIL=$((GATE_FAIL+1))
-    fi
-else
-    echo "❌ latex_includes.tex missing"; GATE_FAIL=$((GATE_FAIL+1))
-fi
-
-# No tiny PDFs
-for pdf in figures/fig_roadmap.pdf figures/fig_flow_*.pdf figures/fig_pipeline*.pdf figures/fig_framework*.pdf; do
-    [ -f "$pdf" ] || continue
-    sz=$(wc -c < "$pdf")
-    [ "$sz" -lt 5000 ] && { echo "❌ $(basename $pdf) only $sz bytes — likely broken"; GATE_FAIL=$((GATE_FAIL+1)); }
-done
-
-echo ""
-[ "$GATE_FAIL" -eq 0 ] && echo "✅ ALL PASSED" || echo "❌ $GATE_FAIL FAILURES — fix and re-run"
-```
-
-**⛔ If GATE_FAIL > 0:**
-1. **逐个修复每个 ❌ 项**（重新生成 .drawio → 导出 → 自检，或重新编译 TikZ，或追加 latex_includes）
-2. **重新运行本质量门脚本**
-3. **重复直到 GATE_FAIL = 0**
-4. **不允许带着任何 ❌ 结束本步骤。** 如果某张图反复失败，启用跨工具兜底（DrawIO↔TikZ）
-
-**⛔ 质量门全部通过后，输出最终 CHECKLIST 确认：**
-```
-DRAWIO PLAN CHECKLIST (FINAL):
-[✅] 1. fig_roadmap — figures/fig_roadmap.pdf (XX KB) — drawio_check PASS
-[✅] 2. fig_flow_q1 — figures/fig_flow_q1.pdf (XX KB) — drawio_check PASS
-[✅] 3. fig_flow_q2 — figures/fig_flow_q2.pdf (XX KB) — drawio_check PASS
-[✅] 4. fig_pipeline — figures/fig_pipeline.pdf (XX KB)
-[✅] latex_includes.tex — contains 4 DrawIO entries
-ALL COMPLETE — paper-figure-drawio step finished successfully
-```
+按 [检查与修复](../../review-policy.md) 逐张打开实际图件，完整检查文字、图例、色条、遮挡、裁切、数据表达和模板保真；先汇总问题再集中修复，修复后复查，轮次与停止条件只由该文件规定。静态检查不能代替实际看图。
 
 ## Key Rules
 

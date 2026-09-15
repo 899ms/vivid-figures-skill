@@ -32,7 +32,7 @@ def main():
     if output.exists():
         output.unlink()
 
-    profile = Path(os.environ.get("APPDATA", str(output.parent))) / "hajimi-drawio"
+    profile = Path(os.environ.get("APPDATA", str(output.parent))) / "vivid-drawio"
     profile.mkdir(parents=True, exist_ok=True)
     command = [executable, "--export", "--format", args.format, "--crop", "--output", str(output)]
     if args.format == "png":

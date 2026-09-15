@@ -464,7 +464,7 @@ for _p in _utils/recipe_audit.py skills/shared-scripts/recipe_audit.py \
 done
 if [ -n "$_RA" ]; then
     _PYA=""
-    for _c in "$MH_PYTHON" python python3; do
+    for _c in "$VIVID_PYTHON" python python3; do
         [ -z "$_c" ] && continue
         command -v "$_c" >/dev/null 2>&1 && _PYA="$_c" && break
     done
