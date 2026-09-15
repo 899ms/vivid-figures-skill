@@ -4,7 +4,7 @@
 
 ### 开放格式与配色展示
 
-- 根入口保持标准 `SKILL.md`（YAML frontmatter + Markdown），通用化宿主适配为 `host-adapter.md`，旧文件名作为兼容入口保留。
+- 根入口保持标准 `SKILL.md`（YAML frontmatter + Markdown），统一使用 `host-adapter.md`，移除旧平台专属兼容入口。
 - 安装指南改用宿主中立的下载与加载说明；原有运行时文件名和配置标记继续兼容。
 - 本轮格式转换未修改绘画流程、提示词、配方或执行脚本，原始资源按转换前哈希核对。
 - 新增蓝天绿地、柔绿森林、粉彩少女、海洋清风，合计七套配色与自定义颜色；README展示七张海报及PNG/SVG/PDF下载和复现入口。
@@ -48,6 +48,6 @@
 
 ## 2026-09-10
 
-- 发布面向 Anthropic Agent Skills 兼容工具的 Vivid Figures Skill。
+- 发布面向 Agent Skills 兼容工具的 Vivid Figures Skill。
 - 保留原绘图指导、108 个配方和辅助资源，提供安装依赖说明。
 - 增加个人非商业使用许可，明确禁止未经许可的二次开发及商业使用。
