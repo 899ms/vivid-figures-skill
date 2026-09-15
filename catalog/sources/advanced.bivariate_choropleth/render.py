@@ -1,10 +1,10 @@
-import numpy as np
+import numpy as np; from _utils.vivid_config import palette_colors
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from matplotlib.colors import LinearSegmentedColormap
 from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
 
-setup_style()
+setup_style(); scale_colors = palette_colors()
 np.random.seed(42)
 
 # === 模拟 2 个变量在 30×30 网格上的取值 ===
@@ -15,11 +15,11 @@ var_b = np.exp(-((x - 20)**2 + (y - 22)**2) / 120) + 0.3 * np.random.rand(N, N)
 var_a = (var_a - var_a.min()) / (var_a.max() - var_a.min())
 var_b = (var_b - var_b.min()) / (var_b.max() - var_b.min())
 
-# === 3×3 双变量配色（X 维度用 PALETTE[0] 渐变，Y 维度用 PALETTE[1] 渐变，组合产生中间色）===
+# === 3×3 双变量配色（X 维度用 scale_colors[0] 渐变，Y 维度用 scale_colors[1] 渐变，组合产生中间色）===
 def bivariate_color(a, b):
     """a, b in [0,1] -> RGB. 用两个主色的加权混合。"""
-    c1 = np.array([int(PALETTE[0].lstrip('#')[i:i+2], 16)/255 for i in (0,2,4)])  # 蓝
-    c2 = np.array([int(PALETTE[1].lstrip('#')[i:i+2], 16)/255 for i in (0,2,4)])  # 橙
+    c1 = np.array([int(scale_colors[0].lstrip('#')[i:i+2], 16)/255 for i in (0,2,4)])  # 蓝
+    c2 = np.array([int(scale_colors[1].lstrip('#')[i:i+2], 16)/255 for i in (0,2,4)])  # 橙
     base = np.array([0.97, 0.97, 0.97])  # 浅灰底
     return base * (1 - 0.5*a - 0.5*b) + c1 * 0.5*a + c2 * 0.5*b
 
@@ -54,8 +54,8 @@ ax_leg.imshow(legend_grid, origin='lower', interpolation='nearest')
 ax_leg.set_xticks([0, 1, 2]); ax_leg.set_yticks([0, 1, 2])
 ax_leg.set_xticklabels(['低', '中', '高'], fontsize=8)
 ax_leg.set_yticklabels(['低', '中', '高'], fontsize=8)
-ax_leg.set_xlabel('变量 A →', fontsize=9, color=PALETTE[0], fontweight='bold')
-ax_leg.set_ylabel('变量 B →', fontsize=9, color=PALETTE[1], fontweight='bold')
+ax_leg.set_xlabel('变量 A →', fontsize=9, color=scale_colors[0], fontweight='bold')
+ax_leg.set_ylabel('变量 B →', fontsize=9, color=scale_colors[1], fontweight='bold')
 ax_leg.set_title('图例', fontsize=9, color=COLORS['text'], pad=4)
 for sp in ax_leg.spines.values(): sp.set_edgecolor(COLORS['grid']); sp.set_linewidth(0.5)
 ax_leg.tick_params(length=0)

@@ -1,4 +1,4 @@
-import numpy as np, matplotlib.pyplot as plt
+import numpy as np, matplotlib.pyplot as plt; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
 setup_style()
 
@@ -18,14 +18,14 @@ data = data[sort_idx]; norm = norm[sort_idx]; models = [models[i] for i in sort_
 rank_symbols = ['①','②','③','④','⑤','⑥']
 
 fig, ax = plt.subplots(figsize=(8, 5))
-im = ax.imshow(norm, cmap='YlOrRd', aspect='auto', vmin=0, vmax=1)
+im = ax.imshow(norm, cmap=palette_cmap('sequential'), aspect='auto', vmin=0, vmax=1)
 
 for j in range(data.shape[1]):
     col = data[:, j]
     ranks = np.argsort(np.argsort(col)) if '↓' in metrics[j] else np.argsort(np.argsort(-col))
     best_idx = np.argmin(col) if '↓' in metrics[j] else np.argmax(col)
     for i in range(data.shape[0]):
-        txt_color = 'white' if norm[i, j] > 0.75 or norm[i, j] < 0.25 else 'black'
+        txt_color = contrast_text(im.cmap(im.norm(norm[i, j])))
         w = 'bold' if i == best_idx else 'normal'
         rank_str = f' {rank_symbols[ranks[i]]}' if ranks[i] < 3 else ''
         ax.text(j, i, f'{data[i,j]:.2f}{rank_str}', ha='center', va='center',
@@ -36,11 +36,11 @@ for j in range(data.shape[1]):
 
 ax.set_xticks(range(len(metrics))); ax.set_xticklabels(metrics, fontsize=10.5)
 ax.set_yticks(range(len(models))); ax.set_yticklabels(models, fontsize=10.5)
-cbar = fig.colorbar(im, ax=ax, shrink=0.7, pad=0.02)
-cbar.set_label('Normalized Score\n(1=Best, 0=Worst)', fontsize=9)
+cbar = fig.colorbar(im, ax=ax, shrink=0.7, pad=0.20)
+cbar.set_label('Normalized Score\n(0=Best, 1=Worst)', fontsize=9)
 ax.spines[:].set_visible(False)
 ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False)
 for i in range(len(models)):
-    ax.text(len(metrics)+0.1, i, f'Avg: {avg_score[sort_idx[i]]:.2f}', ha='left', va='center', fontsize=8, color=COLORS['text'])
+    ax.text(len(metrics)-0.25, i, f'Avg: {avg_score[sort_idx[i]]:.2f}', ha='left', va='center', fontsize=8, color=COLORS['text'])
 fig.tight_layout()
 save_fig(fig, 'figures/fig_model_accuracy_heatmap.pdf')

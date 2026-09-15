@@ -45,8 +45,8 @@ def _get_sns():
 # ============================================================
 # All user palette definitions are maintained in palettes.json.
 _registry = vc.registry()
-PALETTES = {k: v['colors'] for k, v in _registry['palettes'].items()}
-PALETTE = vc.palette_colors()
+PALETTES = {k: vc.categorical_colors({'palette': k}) for k in _registry['palettes']}
+PALETTE = vc.categorical_colors()
 PALETTE_LIGHT = None  # 延迟初始化，在 _lighten 定义后赋值
 
 COLORS = {
@@ -190,7 +190,7 @@ def setup_style(palette='auto'):
     if isinstance(palette, list):
         colors = palette
     elif _project_mode:
-        colors = vc.palette_colors()
+        colors = vc.categorical_colors()
     elif palette in PALETTES:
         colors = list(PALETTES[palette])
     else:
@@ -1701,7 +1701,7 @@ def auto_legend(ax, **kwargs):
 # ============================================================
 
 def heatmap(data, labels=None, output='figures/fig_heatmap.pdf', title=None,
-            annot=True, fmt='.2f', cmap='coolwarm', figsize=(8, 6)):
+            annot=True, fmt='.2f', cmap=None, figsize=(8, 6)):
     """相关性热力图（带数值标注）。
     
     Args:
@@ -1714,6 +1714,12 @@ def heatmap(data, labels=None, output='figures/fig_heatmap.pdf', title=None,
     plt = _get_plt()
     sns = _get_sns()
     setup_style()
+    try:
+        from .palette_maps import palette_cmap, contrast_text
+    except ImportError:
+        from palette_maps import palette_cmap, contrast_text
+    if cmap is None:
+        cmap = palette_cmap('diverging')
     fig, ax = plt.subplots(1, 1, figsize=figsize)
 
     if sns:
@@ -1732,7 +1738,8 @@ def heatmap(data, labels=None, output='figures/fig_heatmap.pdf', title=None,
                 for text in hm.texts:
                     try:
                         val = float(text.get_text())
-                        text.set_color('white' if norm(abs(val)) > 0.6 else 'black')
+                        mesh = hm.collections[0]
+                        text.set_color(contrast_text(mesh.cmap(mesh.norm(val))))
                     except (ValueError, TypeError):
                         pass
     else:
@@ -1743,8 +1750,8 @@ def heatmap(data, labels=None, output='figures/fig_heatmap.pdf', title=None,
                 for j in range(data.shape[1]):
                     if j <= i:
                         val = data[i, j]
-                        color = 'white' if abs(val) > 0.6 else 'black'
-                        ax.text(j, i, f'{val:{fmt[1:]}}', ha='center', va='center', fontsize=8, color=color)
+                        color = contrast_text(im.cmap(im.norm(val)))
+                        ax.text(j, i, f'{val:{fmt}}', ha='center', va='center', fontsize=8, color=color)
         if labels is not None:
             ax.set_xticks(range(len(labels)))
             ax.set_xticklabels(labels, rotation=45, ha='right')

@@ -4,7 +4,7 @@
 **⚠ 布局**: 只画列方向树状图（不画行方向树状图），避免遮挡 y 轴标签。使用 `fig.add_axes()` 手动分区（不要用 gridspec）。树状图和热力图的 left/width 参数完全一致。
 
 ```python
-from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
+from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 setup_style()
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,7 +44,7 @@ col_order = dn_col['leaves']
 row_order = list(range(len(labels_row)))
 ordered_data = data[row_order][:, col_order]
 
-im = ax_heat.imshow(ordered_data, aspect='auto', cmap='coolwarm', interpolation='nearest')
+im = ax_heat.imshow(ordered_data, aspect='auto', cmap=palette_cmap('diverging'), interpolation='nearest')
 ax_heat.set_xticks(range(len(labels_col)))
 ax_heat.set_xticklabels([labels_col[i] for i in col_order], fontsize=8,
                          rotation=45, ha='right')

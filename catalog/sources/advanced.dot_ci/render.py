@@ -1,5 +1,5 @@
-from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
-setup_style()
+from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten; from _utils.vivid_config import palette_colors
+setup_style(); scale_colors = palette_colors()
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
@@ -28,7 +28,7 @@ y_base = np.arange(len(methods))
 offsets = np.linspace(-0.25, 0.25, len(metrics))
 
 # Gradient colormap for significance
-cmap_sig = mcolors.LinearSegmentedColormap.from_list('sig', [COLORS['down'], COLORS['highlight'], COLORS['up']])
+cmap_sig = mcolors.LinearSegmentedColormap.from_list('sig', [scale_colors[1], scale_colors[4] if len(scale_colors) > 4 else scale_colors[0], scale_colors[2] if len(scale_colors) > 2 else scale_colors[0]])
 
 for j, metric in enumerate(metrics):
     for i in range(len(methods)):

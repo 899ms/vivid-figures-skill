@@ -1,5 +1,5 @@
-<meta charset="utf-8"><style>body{font:14px monospace}span:target{background:#fff0a0}a{color:#888;text-decoration:none}span{display:inline-block;min-width:100%}</style><pre><span id="L1"><a href="#L1">   1</a> from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten</span>
-<span id="L2"><a href="#L2">   2</a> setup_style()</span>
+<meta charset="utf-8"><style>body{font:14px monospace}span:target{background:#fff0a0}a{color:#888;text-decoration:none}span{display:inline-block;min-width:100%}</style><pre><span id="L1"><a href="#L1">   1</a> from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten; from _utils.vivid_config import palette_colors</span>
+<span id="L2"><a href="#L2">   2</a> setup_style(); scale_colors = palette_colors()</span>
 <span id="L3"><a href="#L3">   3</a> import matplotlib.pyplot as plt</span>
 <span id="L4"><a href="#L4">   4</a> import matplotlib.colors as mcolors</span>
 <span id="L5"><a href="#L5">   5</a> import numpy as np</span>
@@ -28,7 +28,7 @@
 <span id="L28"><a href="#L28">  28</a> offsets = np.linspace(-0.25, 0.25, len(metrics))</span>
 <span id="L29"><a href="#L29">  29</a> </span>
 <span id="L30"><a href="#L30">  30</a> # Gradient colormap for significance</span>
-<span id="L31"><a href="#L31">  31</a> cmap_sig = mcolors.LinearSegmentedColormap.from_list(&#x27;sig&#x27;, [COLORS[&#x27;down&#x27;], COLORS[&#x27;highlight&#x27;], COLORS[&#x27;up&#x27;]])</span>
+<span id="L31"><a href="#L31">  31</a> cmap_sig = mcolors.LinearSegmentedColormap.from_list(&#x27;sig&#x27;, [scale_colors[1], scale_colors[4] if len(scale_colors) &gt; 4 else scale_colors[0], scale_colors[2] if len(scale_colors) &gt; 2 else scale_colors[0]])</span>
 <span id="L32"><a href="#L32">  32</a> </span>
 <span id="L33"><a href="#L33">  33</a> for j, metric in enumerate(metrics):</span>
 <span id="L34"><a href="#L34">  34</a>     for i in range(len(methods)):</span>
@@ -66,5 +66,4 @@
 <span id="L66"><a href="#L66">  66</a> ax.spines[&#x27;top&#x27;].set_visible(False)</span>
 <span id="L67"><a href="#L67">  67</a> ax.spines[&#x27;right&#x27;].set_visible(False)</span>
 <span id="L68"><a href="#L68">  68</a> fig.tight_layout()</span>
-<span id="L69"><a href="#L69">  69</a> save_fig(fig, &#x27;figures/fig_dot_ci.pdf&#x27;)</span>
-</pre>
+<span id="L69"><a href="#L69">  69</a> save_fig(fig, &#x27;figures/fig_dot_ci.pdf&#x27;)</span></pre>

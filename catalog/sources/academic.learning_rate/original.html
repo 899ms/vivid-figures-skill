@@ -1,4 +1,4 @@
-<meta charset="utf-8"><style>body{font:14px monospace}span:target{background:#fff0a0}a{color:#888;text-decoration:none}span{display:inline-block;min-width:100%}</style><pre><span id="L1"><a href="#L1">   1</a> import numpy as np</span>
+<meta charset="utf-8"><style>body{font:14px monospace}span:target{background:#fff0a0}a{color:#888;text-decoration:none}span{display:inline-block;min-width:100%}</style><pre><span id="L1"><a href="#L1">   1</a> import numpy as np; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text</span>
 <span id="L2"><a href="#L2">   2</a> import matplotlib.pyplot as plt</span>
 <span id="L3"><a href="#L3">   3</a> from matplotlib.patches import Rectangle</span>
 <span id="L4"><a href="#L4">   4</a> from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten</span>
@@ -59,7 +59,7 @@
 <span id="L59"><a href="#L59">  59</a>                             fontsize=7, color=COLORS[&#x27;ref_line&#x27;], transform=ax_err.transAxes)</span>
 <span id="L60"><a href="#L60">  60</a>         else:</span>
 <span id="L61"><a href="#L61">  61</a>             error = np.random.rand(64, 64) * (0.1 if method == &#x27;Ours&#x27; else 0.3 if method == &#x27;Method A&#x27; else 0.5)</span>
-<span id="L62"><a href="#L62">  62</a>             ax_err.imshow(error, cmap=&#x27;hot&#x27;, vmin=0, vmax=0.5)</span>
+<span id="L62"><a href="#L62">  62</a>             ax_err.imshow(error, cmap=palette_cmap(&#x27;sequential&#x27;), vmin=0, vmax=0.5)</span>
 <span id="L63"><a href="#L63">  63</a>             ax_err.axis(&#x27;off&#x27;)</span>
 <span id="L64"><a href="#L64">  64</a>             # PSNR/SSIM annotation</span>
 <span id="L65"><a href="#L65">  65</a>             if method in psnr_scores:</span>
@@ -68,5 +68,4 @@
 <span id="L68"><a href="#L68">  68</a>                             transform=ax_err.transAxes)</span>
 <span id="L69"><a href="#L69">  69</a> </span>
 <span id="L70"><a href="#L70">  70</a> fig.tight_layout(pad=0.5, h_pad=0.3)</span>
-<span id="L71"><a href="#L71">  71</a> save_fig(fig, &#x27;figures/fig_qualitative.pdf&#x27;)</span>
-</pre>
+<span id="L71"><a href="#L71">  71</a> save_fig(fig, &#x27;figures/fig_qualitative.pdf&#x27;)</span></pre>

@@ -57,3 +57,7 @@ ID：`advanced.method_heatmap`
 - 源码：[L55–55](../sources/advanced.method_heatmap/original.html#L55) · [L86–87](../sources/advanced.method_heatmap/original.html#L86) · [L91–94](../sources/advanced.method_heatmap/original.html#L91) · [L97–99](../sources/advanced.method_heatmap/original.html#L97)
 
 按现有审图流程对照实际输出；有疑问时可用[源码差异提示](../../template-fidelity.md)。
+
+## 项目配色
+
+热图默认读取项目配色；连续插值、中性色、透明度及数据归一化保留，数值文字按实际底色选择对比色。

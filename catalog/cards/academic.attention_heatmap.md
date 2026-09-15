@@ -51,3 +51,7 @@ ID：`academic.attention_heatmap`
 - 源码：[L26–27](../sources/academic.attention_heatmap/original.html#L26) · [L36–37](../sources/academic.attention_heatmap/original.html#L36) · [L45–45](../sources/academic.attention_heatmap/original.html#L45) · [L65–65](../sources/academic.attention_heatmap/original.html#L65)
 
 按现有审图流程对照实际输出；有疑问时可用[源码差异提示](../../template-fidelity.md)。
+
+## 项目配色
+
+热图默认读取项目配色；连续插值、中性色、透明度及数据归一化保留，数值文字按实际底色选择对比色。

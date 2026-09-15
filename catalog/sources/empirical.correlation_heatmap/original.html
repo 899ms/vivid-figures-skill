@@ -1,4 +1,4 @@
-<meta charset="utf-8"><style>body{font:14px monospace}span:target{background:#fff0a0}a{color:#888;text-decoration:none}span{display:inline-block;min-width:100%}</style><pre><span id="L1"><a href="#L1">   1</a> import numpy as np, matplotlib.pyplot as plt, seaborn as sns</span>
+<meta charset="utf-8"><style>body{font:14px monospace}span:target{background:#fff0a0}a{color:#888;text-decoration:none}span{display:inline-block;min-width:100%}</style><pre><span id="L1"><a href="#L1">   1</a> import numpy as np, matplotlib.pyplot as plt, seaborn as sns; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text</span>
 <span id="L2"><a href="#L2">   2</a> from scipy.cluster.hierarchy import linkage, dendrogram</span>
 <span id="L3"><a href="#L3">   3</a> from scipy.stats import pearsonr</span>
 <span id="L4"><a href="#L4">   4</a> from _utils.plot_utils import setup_style, save_fig, COLORS, _lighten</span>
@@ -28,7 +28,7 @@
 <span id="L28"><a href="#L28">  28</a> </span>
 <span id="L29"><a href="#L29">  29</a> ax_heat = fig.add_subplot(gs[1])</span>
 <span id="L30"><a href="#L30">  30</a> mask = np.triu(np.ones_like(corr, dtype=bool), k=1)</span>
-<span id="L31"><a href="#L31">  31</a> sns.heatmap(corr, mask=mask, annot=False, cmap=&#x27;coolwarm&#x27;, center=0, square=True,</span>
+<span id="L31"><a href="#L31">  31</a> sns.heatmap(corr, mask=mask, annot=False, cmap=palette_cmap(&#x27;diverging&#x27;), center=0, square=True,</span>
 <span id="L32"><a href="#L32">  32</a>             linewidths=1.0, linecolor=&#x27;white&#x27;, xticklabels=labels, yticklabels=labels,</span>
 <span id="L33"><a href="#L33">  33</a>             cbar_kws={&#x27;shrink&#x27;: 0.7, &#x27;label&#x27;: &#x27;Correlation&#x27;}, ax=ax_heat, vmin=-1, vmax=1)</span>
 <span id="L34"><a href="#L34">  34</a> </span>
@@ -38,10 +38,9 @@
 <span id="L38"><a href="#L38">  38</a>             val = corr[i, j]</span>
 <span id="L39"><a href="#L39">  39</a>             p = pvals[i, j] if i != j else 0</span>
 <span id="L40"><a href="#L40">  40</a>             stars = &#x27;***&#x27; if p &lt; 0.001 else (&#x27;**&#x27; if p &lt; 0.01 else (&#x27;*&#x27; if p &lt; 0.05 else &#x27;&#x27;))</span>
-<span id="L41"><a href="#L41">  41</a>             txt_color = &#x27;white&#x27; if abs(val) &gt; 0.55 else &#x27;black&#x27;</span>
+<span id="L41"><a href="#L41">  41</a>             txt_color = contrast_text(ax_heat.collections[0].cmap(ax_heat.collections[0].norm(val)))</span>
 <span id="L42"><a href="#L42">  42</a>             ax_heat.text(j + 0.5, i + 0.5, f&#x27;{val:.2f}{stars}&#x27;, ha=&#x27;center&#x27;, va=&#x27;center&#x27;,</span>
 <span id="L43"><a href="#L43">  43</a>                          fontsize=8.5, color=txt_color, fontweight=&#x27;bold&#x27; if i == j else &#x27;normal&#x27;)</span>
 <span id="L44"><a href="#L44">  44</a> </span>
 <span id="L45"><a href="#L45">  45</a> fig.tight_layout()</span>
-<span id="L46"><a href="#L46">  46</a> save_fig(fig, &#x27;figures/fig_corr.pdf&#x27;)</span>
-</pre>
+<span id="L46"><a href="#L46">  46</a> save_fig(fig, &#x27;figures/fig_corr.pdf&#x27;)</span></pre>

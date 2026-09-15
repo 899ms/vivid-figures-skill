@@ -1,11 +1,11 @@
-import numpy as np
+import numpy as np; from _utils.vivid_config import palette_colors
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.colors import LinearSegmentedColormap
 from datetime import date, timedelta
 from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
 
-setup_style()
+setup_style(); scale_colors = palette_colors()
 np.random.seed(42)
 
 # === 模拟一年的日数据（周末偏低，月底偏高，几个事件峰值）===
@@ -31,8 +31,8 @@ for i in range(n_days):
     if d.day == 1:
         month_starts.append((d.month, week, weekday))
 
-# === 主色调渐变 colormap（用 PALETTE[0] 的浅→深）===
-base = PALETTE[0]
+# === 主色调渐变 colormap（用原色序首色的浅→深）===
+base = scale_colors[0]
 cmap_calendar = LinearSegmentedColormap.from_list(
     'cal', [_lighten(base, 0.92), _lighten(base, 0.5), base, _lighten(base, -0.15) if False else base],
     N=128

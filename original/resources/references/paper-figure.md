@@ -265,21 +265,7 @@ fi
 # 改用 head 取前 1500 行的核心规则部分; 需要更细规则时再 grep 或 Read 工具按需读
 (cat _utils/figure_style_guide.md 2>/dev/null || cat skills/shared-scripts/figure_style_guide.md) | head -1500
 ```
-2. Scan recipe file headings to know what templates are available:
-```bash
-echo "=== Advanced ==="
-(cat _utils/figure_recipes_advanced.md 2>/dev/null || cat skills/shared-scripts/figure_recipes_advanced.md 2>/dev/null) | grep '^## '
-echo "=== Basic ==="
-(cat _utils/figure_recipes_basic.md 2>/dev/null || cat skills/shared-scripts/figure_recipes_basic.md 2>/dev/null) | grep '^## '
-echo "=== Academic ==="
-(cat _utils/figure_recipes_academic.md 2>/dev/null || cat skills/shared-scripts/figure_recipes_academic.md 2>/dev/null) | grep '^## '
-echo "=== Competition ==="
-(cat _utils/figure_recipes_competition.md 2>/dev/null || cat skills/shared-scripts/figure_recipes_competition.md 2>/dev/null) | grep '^## '
-echo "=== Empirical ==="
-(cat _utils/figure_recipes_empirical.md 2>/dev/null || cat skills/shared-scripts/figure_recipes_empirical.md 2>/dev/null) | grep '^## '
-echo "=== Basic (fallback only) ==="
-(cat _utils/figure_recipes_basic.md 2>/dev/null || cat skills/shared-scripts/figure_recipes_basic.md 2>/dev/null) | grep '^## '
-```
+2. Browse the unified template catalog using [data and template selection](../../../figure-selection.md): read the compact [selection index](../../../catalog/selection-index.jsonl), compare purpose, data requirements, composition and visual features, then inspect candidate cards and previews. Tags can overlap; stable recipe IDs locate the selected source.
 3. **⛔ MANDATORY: Extract the COMPLETE figure plan from planning docs.** Read ALL planning docs and extract every planned figure/table into a numbered checklist:
 ```bash
 echo "=== Extracting figure plan (head -800 each, 防 thrashing) ==="
@@ -431,12 +417,12 @@ Generate all figures from scratch using JSON data in `figures/*.json`.
 
 ### Step 2: Figure type decisions
 
-Browse the recipe library (108 recipes across 5 files) and the `<figure_selection_guide>` decision table from the style guide. For each planned figure:
+Browse the unified template catalog (108 recipes and one complete combination template) and the `<figure_selection_guide>` decision table from the style guide. For each planned figure:
 
 1. Identify the data characteristic (e.g., "3 methods × 4 metrics comparison")
 2. Browse ALL available recipe types — don't default to the same few charts every time
 3. Pick the type that best fits the data AND looks visually distinct from other figures in this paper
-4. Ensure visual variety: do not use the same chart type more than 2 times in one paper. Mix basic, advanced, competition, and empirical recipes
+4. Ensure visual variety: do not use the same chart type more than 2 times in one paper. Use different suitable visual structures and information layers
 5. Read the full code example from the matched recipe file
 6. Use the configured project palette and preserve the selected recipe's color roles
 
@@ -566,7 +552,7 @@ setup_style()  # defaults to Soft palette; alternatives: tableau/npg/nejm/scienc
 
 # ... figure generation code ...
 # Read data from JSON/CSV, never hardcode numbers
-# NEVER use cmap='RdYlGn' — use 'coolwarm' or 'YlOrRd' instead. Do NOT use 'RdBu_r' (too dark)
+# NEVER use cmap='RdYlGn' — use palette_cmap('diverging') or palette_cmap('sequential') from _utils.palette_maps instead. Do NOT use 'RdBu_r' (too dark)
 # No plt.title() — captions go in LaTeX only
 # ⛔ 图内文字最小化：结论陈述/多行说明/方法解释一律进 LaTeX \caption{}，绝不浮在数据上；
 #    图内只留"数据锚点短标签"（≤1 行、贴着数据、不是句子），每个 panel ≤2 个。
@@ -681,7 +667,7 @@ If violations found (especially CRITICAL), fix and re-check before executing:
 - matplotlib default blue `#1f77b4` (and the rest of tab10) → use `PALETTE` (just calling `setup_style()` auto-applies it to all subsequent `ax.bar/plot/scatter` without `color=` arg)
 - `plt.title()` → remove (caption in LaTeX only)
 - `ax.grid()` → remove (setup_style handles grid)
-- `RdYlGn` or `RdYlGn_r` colormap → use `coolwarm` (for diverging) or `YlOrRd` (for sequential). Do NOT use `RdBu_r` (too dark)
+- `RdYlGn` or `RdYlGn_r` colormap → use `palette_cmap("diverging")` or `palette_cmap("sequential")` to follow the project palette. Do NOT use `RdBu_r` (too dark)
 - Empty value placeholders → read from data files
 - ⛔ **「N 张图的代码没画出规划要求的图型」**（规划写等高线却画成条形图这类）→ 翻
   `_utils/RECIPES_FOR_THIS_PAPER.md` 里对应的 `recipe:<id>` 配方，按配方代码重写该图；

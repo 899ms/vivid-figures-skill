@@ -1235,8 +1235,8 @@ save_fig(fig, 'figures/fig_funnel.pdf')
 **场景**: 多方法多指标对比。比柱状图信息密度更高——同时展示显著性、汇总估计和各自的置信区间。Nature/Cell 风格。
 
 ```python
-from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
-setup_style()
+from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten; from _utils.vivid_config import palette_colors
+setup_style(); scale_colors = palette_colors()
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
@@ -1265,7 +1265,7 @@ y_base = np.arange(len(methods))
 offsets = np.linspace(-0.25, 0.25, len(metrics))
 
 # Gradient colormap for significance
-cmap_sig = mcolors.LinearSegmentedColormap.from_list('sig', [COLORS['down'], COLORS['highlight'], COLORS['up']])
+cmap_sig = mcolors.LinearSegmentedColormap.from_list('sig', [scale_colors[1], scale_colors[4] if len(scale_colors) > 4 else scale_colors[0], scale_colors[2] if len(scale_colors) > 2 else scale_colors[0]])
 
 for j, metric in enumerate(metrics):
     for i in range(len(methods)):
@@ -1322,7 +1322,7 @@ save_fig(fig, 'figures/fig_dot_ci.pdf')
 **⚠ 布局**: 只画列方向树状图（不画行方向树状图），避免遮挡 y 轴标签。使用 `fig.add_axes()` 手动分区（不要用 gridspec）。树状图和热力图的 left/width 参数完全一致。
 
 ```python
-from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
+from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 setup_style()
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1362,7 +1362,7 @@ col_order = dn_col['leaves']
 row_order = list(range(len(labels_row)))
 ordered_data = data[row_order][:, col_order]
 
-im = ax_heat.imshow(ordered_data, aspect='auto', cmap='coolwarm', interpolation='nearest')
+im = ax_heat.imshow(ordered_data, aspect='auto', cmap=palette_cmap('diverging'), interpolation='nearest')
 ax_heat.set_xticks(range(len(labels_col)))
 ax_heat.set_xticklabels([labels_col[i] for i in col_order], fontsize=8,
                          rotation=45, ha='right')
@@ -1508,8 +1508,8 @@ save_fig(fig, 'figures/fig_cluster_heatmap.pdf')
 **场景**: 引用网络、知识图谱、社交网络、因果关系。
 
 ```python
-from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
-setup_style()
+from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten; from _utils.vivid_config import palette_colors
+setup_style(); scale_colors = palette_colors()
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
@@ -1565,7 +1565,7 @@ for i, comm in enumerate(communities):
 edges = G.edges()
 edge_weights = [G[u][v].get('weight', 1) for u, v in edges]
 max_w = max(edge_weights) if edge_weights else 1
-cmap_edge = mcolors.LinearSegmentedColormap.from_list('ew', [_lighten(PALETTE[0], 0.8), COLORS['ref_line']])
+cmap_edge = mcolors.LinearSegmentedColormap.from_list('ew', [_lighten(scale_colors[0], 0.8), COLORS['ref_line']])
 for (u, v), w in zip(edges, edge_weights):
     x0, y0 = pos[u]
     x1, y1 = pos[v]
@@ -1612,7 +1612,7 @@ save_fig(fig, 'figures/fig_network.pdf')
 **风格**: YlOrRd heatmap + 浅色填充+原色边框 用于列最优单元格 + 排名奖牌。
 
 ```python
-from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
+from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 setup_style()
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1666,7 +1666,7 @@ ordered_norm = norm_ext[row_order]
 ordered_data = data_ext[row_order]
 ordered_methods = [methods[i] for i in row_order]
 
-im = ax.imshow(ordered_norm, cmap='YlOrRd', aspect='auto', vmin=0, vmax=1)
+im = ax.imshow(ordered_norm, cmap=palette_cmap('sequential'), aspect='auto', vmin=0, vmax=1)
 ax.set_xticks(range(len(metrics_ext)))
 ax.set_xticklabels(metrics_ext, fontsize=10)
 ax.set_yticks(range(len(methods)))
@@ -1694,7 +1694,7 @@ for j in range(len(metrics_ext)):
         rank_idx = i_orig
         rank_label = rank_symbols[rank_idx] if rank_idx < len(rank_symbols) else ''
 
-        color = 'white' if ordered_norm[i_display, j] > 0.75 or ordered_norm[i_display, j] < 0.25 else 'black'
+        color = contrast_text(im.cmap(im.norm(ordered_norm[i_display, j])))
         weight = 'bold' if rank_idx == 0 else 'normal'
 
         ax.text(j, i_display, f'{val_str}\n{rank_label}', ha='center', va='center',
@@ -2602,14 +2602,14 @@ save_fig(fig, 'figures/fig_fan_chart.pdf')
 **场景**: 时序观察（每日数据：交易量、能耗、降雨、用户活跃）。GitHub 贡献图风格。一眼看出周期性 / 节假日 / 异常日。
 
 ```python
-import numpy as np
+import numpy as np; from _utils.vivid_config import palette_colors
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from matplotlib.colors import LinearSegmentedColormap
 from datetime import date, timedelta
 from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
 
-setup_style()
+setup_style(); scale_colors = palette_colors()
 np.random.seed(42)
 
 # === 模拟一年的日数据（周末偏低，月底偏高，几个事件峰值）===
@@ -2635,8 +2635,8 @@ for i in range(n_days):
     if d.day == 1:
         month_starts.append((d.month, week, weekday))
 
-# === 主色调渐变 colormap（用 PALETTE[0] 的浅→深）===
-base = PALETTE[0]
+# === 主色调渐变 colormap（用原色序首色的浅→深）===
+base = scale_colors[0]
 cmap_calendar = LinearSegmentedColormap.from_list(
     'cal', [_lighten(base, 0.92), _lighten(base, 0.5), base, _lighten(base, -0.15) if False else base],
     N=128
@@ -2696,7 +2696,7 @@ save_fig(fig, 'figures/fig_calendar_heatmap.pdf')
 ⛔ **不要画反 Y 轴方向**：Hovmöller 约定时间从上往下（即 `ax.invert_yaxis()` 或直接 `extent` 反过来）。
 
 ```python
-import numpy as np
+import numpy as np; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 import matplotlib.pyplot as plt
 from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
 
@@ -2720,7 +2720,7 @@ fig, ax = plt.subplots(figsize=(7, 5))
 
 # ★ 双向色阶（偏离零）— 用 coolwarm 但反转让暖色=正
 v = np.nanmax(np.abs(data))
-im = ax.imshow(data, aspect='auto', cmap='RdBu_r', vmin=-v, vmax=v,
+im = ax.imshow(data, aspect='auto', cmap=palette_cmap('diverging'), vmin=-v, vmax=v,
                extent=[lons[0], lons[-1], months[-1], months[0]],
                interpolation='bilinear')
 
@@ -2876,7 +2876,7 @@ save_fig(fig, 'figures/fig_pair_plot.pdf')
 **场景**: CV / NLP / AI 定性结果展示。三个等宽子图横向并列，子图间用箭头暗示数据流，共享色标（如适用）。
 
 ```python
-import numpy as np
+import numpy as np; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import FancyArrowPatch
@@ -2905,7 +2905,7 @@ v = max(np.max(im) for im in images)
 axes_img = []
 for col in range(3):
     ax = fig.add_subplot(gs[1, col])
-    im = ax.imshow(images[col], cmap='viridis', vmin=0, vmax=v,
+    im = ax.imshow(images[col], cmap=palette_cmap('sequential'), vmin=0, vmax=v,
                    interpolation='bilinear')
     ax.set_title(titles[col], fontsize=11, fontweight='bold',
                  color=COLORS['text'], pad=8)
@@ -2915,7 +2915,7 @@ for col in range(3):
 # === 顶部共享色条 ===
 cbar_ax = fig.add_subplot(gs[0, :])
 cbar = fig.colorbar(axes_img[0][1], cax=cbar_ax, orientation='horizontal')
-cbar.set_label('归一化激活', fontsize=8)
+cbar.set_label('归一化激活', fontsize=8); cbar.ax.xaxis.set_label_position('top'); cbar.ax.xaxis.set_ticks_position('top')
 cbar.ax.tick_params(labelsize=7, length=2)
 cbar.outline.set_linewidth(0.4)
 cbar.outline.set_edgecolor(COLORS['grid'])
@@ -3120,13 +3120,13 @@ save_fig(fig, 'figures/fig_streamgraph.pdf')
 **场景**: 双变量空间分布（社会-经济、风险-暴露、降水-气温）。一个图同时表达两个变量的高/中/低组合。配 3×3 颜色矩阵作图例。
 
 ```python
-import numpy as np
+import numpy as np; from _utils.vivid_config import palette_colors
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from matplotlib.colors import LinearSegmentedColormap
 from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
 
-setup_style()
+setup_style(); scale_colors = palette_colors()
 np.random.seed(42)
 
 # === 模拟 2 个变量在 30×30 网格上的取值 ===
@@ -3137,11 +3137,11 @@ var_b = np.exp(-((x - 20)**2 + (y - 22)**2) / 120) + 0.3 * np.random.rand(N, N)
 var_a = (var_a - var_a.min()) / (var_a.max() - var_a.min())
 var_b = (var_b - var_b.min()) / (var_b.max() - var_b.min())
 
-# === 3×3 双变量配色（X 维度用 PALETTE[0] 渐变，Y 维度用 PALETTE[1] 渐变，组合产生中间色）===
+# === 3×3 双变量配色（X 维度用 scale_colors[0] 渐变，Y 维度用 scale_colors[1] 渐变，组合产生中间色）===
 def bivariate_color(a, b):
     """a, b in [0,1] -> RGB. 用两个主色的加权混合。"""
-    c1 = np.array([int(PALETTE[0].lstrip('#')[i:i+2], 16)/255 for i in (0,2,4)])  # 蓝
-    c2 = np.array([int(PALETTE[1].lstrip('#')[i:i+2], 16)/255 for i in (0,2,4)])  # 橙
+    c1 = np.array([int(scale_colors[0].lstrip('#')[i:i+2], 16)/255 for i in (0,2,4)])  # 蓝
+    c2 = np.array([int(scale_colors[1].lstrip('#')[i:i+2], 16)/255 for i in (0,2,4)])  # 橙
     base = np.array([0.97, 0.97, 0.97])  # 浅灰底
     return base * (1 - 0.5*a - 0.5*b) + c1 * 0.5*a + c2 * 0.5*b
 
@@ -3176,8 +3176,8 @@ ax_leg.imshow(legend_grid, origin='lower', interpolation='nearest')
 ax_leg.set_xticks([0, 1, 2]); ax_leg.set_yticks([0, 1, 2])
 ax_leg.set_xticklabels(['低', '中', '高'], fontsize=8)
 ax_leg.set_yticklabels(['低', '中', '高'], fontsize=8)
-ax_leg.set_xlabel('变量 A →', fontsize=9, color=PALETTE[0], fontweight='bold')
-ax_leg.set_ylabel('变量 B →', fontsize=9, color=PALETTE[1], fontweight='bold')
+ax_leg.set_xlabel('变量 A →', fontsize=9, color=scale_colors[0], fontweight='bold')
+ax_leg.set_ylabel('变量 B →', fontsize=9, color=scale_colors[1], fontweight='bold')
 ax_leg.set_title('图例', fontsize=9, color=COLORS['text'], pad=4)
 for sp in ax_leg.spines.values(): sp.set_edgecolor(COLORS['grid']); sp.set_linewidth(0.5)
 ax_leg.tick_params(length=0)

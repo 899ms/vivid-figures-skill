@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import seaborn as sns
@@ -42,7 +42,7 @@ ax_heat = fig.add_subplot(gs[1, 1])
 mask = np.triu(np.ones_like(corr, dtype=bool), k=1)
 corr_masked = np.ma.array(corr, mask=mask)
 
-im = ax_heat.imshow(corr_masked, cmap='RdBu_r', vmin=-1, vmax=1, aspect='auto')
+im = ax_heat.imshow(corr_masked, cmap=palette_cmap('diverging'), vmin=-1, vmax=1, aspect='auto')
 ax_heat.set_xticks(range(n))
 ax_heat.set_xticklabels(labels, rotation=45, ha='right', fontsize=9)
 ax_heat.set_yticks(range(n))
@@ -53,7 +53,7 @@ for i in range(n):
     for j in range(n):
         if not mask[i, j]:
             val = corr[i, j]
-            text_color = 'white' if abs(val) > 0.5 else COLORS['text']
+            text_color = contrast_text(im.cmap(im.norm(val)))
             ax_heat.text(j, i, f'{val:.2f}', ha='center', va='center',
                          fontsize=7.5, color=text_color, fontweight='bold' if abs(val) > 0.7 else 'normal')
 

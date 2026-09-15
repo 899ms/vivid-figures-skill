@@ -761,7 +761,7 @@ save_fig(fig, 'figures/fig_feature_importance.pdf')
 **要点**：热力图+数值标注、颜色深浅自适应文字颜色、归一化百分比。
 
 ```python
-import numpy as np, matplotlib.pyplot as plt
+import numpy as np, matplotlib.pyplot as plt; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 import seaborn as sns
 from _utils.plot_utils import setup_style, save_fig, PALETTE
 setup_style()
@@ -771,12 +771,12 @@ cm = np.array([[85, 5, 7, 3], [4, 90, 3, 3], [6, 4, 82, 8], [2, 3, 5, 90]])
 cm_norm = cm / cm.sum(axis=1, keepdims=True) * 100
 
 fig, ax = plt.subplots(figsize=(6, 5))
-sns.heatmap(cm_norm, annot=True, fmt='.1f', cmap='Blues', xticklabels=classes,
+sns.heatmap(cm_norm, annot=True, fmt='.1f', cmap=palette_cmap('sequential'), xticklabels=classes,
             yticklabels=classes, linewidths=0.5, linecolor='white',
             cbar_kws={'label': '预测准确率 (%)'}, ax=ax)
 ax.set_xlabel('预测类别', fontsize=11); ax.set_ylabel('真实类别', fontsize=11)
 ax.set_xticklabels(classes, fontsize=10); ax.set_yticklabels(classes, fontsize=10, rotation=0)
-fig.tight_layout()
+[t.set_color(contrast_text(ax.collections[0].cmap(ax.collections[0].norm(float(t.get_text()))))) for t in ax.texts]; fig.tight_layout()
 save_fig(fig, 'figures/fig_confusion_matrix.pdf')
 ```
 
@@ -841,7 +841,7 @@ save_fig(fig, 'figures/fig_roc.pdf')
 **要点**：只显示下三角、数值标注、颜色映射 -1 到 1、对角线标注变量名。
 
 ```python
-import numpy as np, matplotlib.pyplot as plt
+import numpy as np, matplotlib.pyplot as plt; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 import seaborn as sns
 from _utils.plot_utils import setup_style, save_fig, PALETTE
 setup_style()
@@ -856,13 +856,13 @@ corr = np.corrcoef(data.T)
 mask = np.triu(np.ones_like(corr, dtype=bool), k=1)
 
 fig, ax = plt.subplots(figsize=(7, 6))
-sns.heatmap(corr, mask=mask, annot=True, fmt='.2f', cmap='RdBu_r', center=0,
+sns.heatmap(corr, mask=mask, annot=True, fmt='.2f', cmap=palette_cmap('diverging'), center=0,
             vmin=-1, vmax=1, xticklabels=var_names, yticklabels=var_names,
             linewidths=0.5, linecolor='white', square=True,
             cbar_kws={'shrink': 0.8, 'label': '相关系数'}, ax=ax)
 ax.set_xticklabels(var_names, fontsize=9, rotation=45, ha='right')
 ax.set_yticklabels(var_names, fontsize=9, rotation=0)
-fig.tight_layout()
+[t.set_color(contrast_text(ax.collections[0].cmap(ax.collections[0].norm(float(t.get_text()))))) for t in ax.texts]; fig.tight_layout()
 save_fig(fig, 'figures/fig_correlation.pdf')
 ```
 
@@ -1162,7 +1162,7 @@ save_fig(fig, 'figures/fig_multistep_decay.pdf')
 **要点**：热力图+时间轴+区域轴、颜色映射数值、关键值标注。
 
 ```python
-import numpy as np, matplotlib.pyplot as plt
+import numpy as np, matplotlib.pyplot as plt; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 import seaborn as sns
 from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS
 setup_style()
@@ -1174,13 +1174,13 @@ data = np.random.uniform(3, 12, (len(regions), len(years)))
 data = np.round(data, 1)
 
 fig, ax = plt.subplots(figsize=(9, 5))
-sns.heatmap(data, annot=True, fmt='.1f', cmap='YlOrRd',
+sns.heatmap(data, annot=True, fmt='.1f', cmap=palette_cmap('sequential'),
             xticklabels=years, yticklabels=regions,
             linewidths=0.3, linecolor='white',
             cbar_kws={'label': 'GDP增长率 (%)', 'shrink': 0.8}, ax=ax)
 ax.set_xlabel('年份', fontsize=11); ax.set_ylabel('地区', fontsize=11)
 ax.set_yticklabels(regions, rotation=0, fontsize=9)
-fig.tight_layout()
+[t.set_color(contrast_text(ax.collections[0].cmap(ax.collections[0].norm(float(t.get_text()))))) for t in ax.texts]; fig.tight_layout()
 save_fig(fig, 'figures/fig_spatiotemporal.pdf')
 ```
 

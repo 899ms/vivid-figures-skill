@@ -4,7 +4,7 @@
 **要点**：只显示下三角、数值标注、颜色映射 -1 到 1、对角线标注变量名。
 
 ```python
-import numpy as np, matplotlib.pyplot as plt
+import numpy as np, matplotlib.pyplot as plt; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 import seaborn as sns
 from _utils.plot_utils import setup_style, save_fig, PALETTE
 setup_style()
@@ -19,13 +19,13 @@ corr = np.corrcoef(data.T)
 mask = np.triu(np.ones_like(corr, dtype=bool), k=1)
 
 fig, ax = plt.subplots(figsize=(7, 6))
-sns.heatmap(corr, mask=mask, annot=True, fmt='.2f', cmap='RdBu_r', center=0,
+sns.heatmap(corr, mask=mask, annot=True, fmt='.2f', cmap=palette_cmap('diverging'), center=0,
             vmin=-1, vmax=1, xticklabels=var_names, yticklabels=var_names,
             linewidths=0.5, linecolor='white', square=True,
             cbar_kws={'shrink': 0.8, 'label': '相关系数'}, ax=ax)
 ax.set_xticklabels(var_names, fontsize=9, rotation=45, ha='right')
 ax.set_yticklabels(var_names, fontsize=9, rotation=0)
-fig.tight_layout()
+[t.set_color(contrast_text(ax.collections[0].cmap(ax.collections[0].norm(float(t.get_text()))))) for t in ax.texts]; fig.tight_layout()
 save_fig(fig, 'figures/fig_correlation.pdf')
 ```
 

@@ -176,7 +176,7 @@ Not every "upgrade" is appropriate. Check this table, but choose based on clarit
 
 ### ⛔ 工程卫生（保证"图是可信的工程产物"）
 - **数值/常数从真实来源读**：坐标、阈值、统计量、每个 bar 的高度应来自计算结果或数据文件（如 `results.json`、`df`），不要在绘图脚本里凭空写死来路不明的数字。图里的每个数字都要对得上正文。
-- **连续色图保真**：按原配方与数据语义保留连续色阶，不因更换分类配色而统一改成主题单色；渐变、透明层次与原色描边各司其职。
+- **连续色图保真**：按原配方与数据语义保留连续色阶，热图通过 palette_cmap / palette_stops 跟随项目配色，不把连续量离散成分类色块；渐变、透明层次与原色描边各司其职。
 - **异量纲隔离，别强行同轴**：单位/量级差异大的量（如"时间 s"和"百分比 %"）不要塞进同一个 Y 轴。用双轴 `ax.twinx()`（各自标注单位）或拆成上下 panel。同轴混画不同量纲会让读者误判相对大小。
 - **图能独立复现**：脚本从数据到 `save_fig` 一条龙跑通，不依赖手动改数或某次交互状态；交付前顺手清掉调试残留（`plt.show()`、被注释掉的整段旧画法）。
 
@@ -199,9 +199,9 @@ Not every "upgrade" is appropriate. Check this table, but choose based on clarit
 - **⛔ 禁止**：超过 7 个扇区、无白色分隔线、3D 效果
 
 ### 热力图（Heatmap）
-- 相关性矩阵（正负对比）：`cmap='coolwarm'`，`center=0`，下三角 mask。**⛔ 不要用 `RdBu_r`**——深红深蓝太沉重，`coolwarm` 更柔和
-- 方法对比热力图（归一化性能）：`cmap='YlGnBu'` 或 `cmap='coolwarm'`，浅色背景+深色高亮，配合白色数值标注
-- 频率/计数：`cmap='YlOrRd'` 或 `cmap='Blues'`
+- 相关性矩阵（正负对比）：`cmap=palette_cmap('diverging')`，`center=0`，下三角 mask。**⛔ 不要用 `RdBu_r`**——深红深蓝太沉重，`coolwarm` 更柔和
+- 方法对比热力图（归一化性能）：`cmap=palette_cmap('sequential')`，浅色背景+深色高亮，配合白色数值标注
+- 频率/计数：`cmap=palette_cmap('sequential')`
 - **⛔ 禁止**：`jet` colormap、`RdBu_r`（太深沉）、无数值标注、全矩阵（不 mask）
 - **⛔ 反模式**：≤5 行的方法对比不要用深色热力图，改用 Radar chart 或 Dumbbell chart
 
@@ -224,7 +224,7 @@ Not every "upgrade" is appropriate. Check this table, but choose based on clarit
 
 - 代码里用色一律引用 `PALETTE[0]`、`PALETTE[1]`… 和 `COLORS['primary']` 等**语义变量**，它们会随 `setup_style()` 选中的配色自动变化。**⛔ 绝不硬编码十六进制色值**（如 `color='#5B9BD5'`），硬编码会绕过项目选择。
 - **⛔ 绝不用 matplotlib 默认色** `#1f77b4`（那种"默认蓝"是最明显的"没调过样式"信号）。
-- **渐变色（热力图/填充）**：用 `cmap='coolwarm'`（红蓝对比柔和版）或 `cmap='YlOrRd'`（暖色渐变），不要用 `jet` 或 `RdBu_r`（太深沉）。
+- **渐变色（热力图/填充）**：用 `palette_cmap('diverging')`（正负对比）或 `palette_cmap('sequential')`（单向强度），不要用 `jet` 或 `RdBu_r`（太深沉）。
 
 ## 字体与排版
 
@@ -265,7 +265,8 @@ ax.fill_between(x, y_low, y_high, alpha=0.15, color=NATURE[0])
 ### 4. 热力图用 mask 只显示下三角
 ```python
 mask = np.triu(np.ones_like(corr, dtype=bool), k=1)
-sns.heatmap(corr, mask=mask, annot=True, fmt='.2f', cmap='coolwarm', center=0)
+from _utils.palette_maps import palette_cmap
+sns.heatmap(corr, mask=mask, annot=True, fmt='.2f', cmap=palette_cmap('diverging'), center=0)
 ```
 
 ### 5. 回归系数森林图（实证论文核心图）

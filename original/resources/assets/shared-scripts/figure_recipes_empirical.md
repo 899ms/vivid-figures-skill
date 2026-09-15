@@ -310,7 +310,7 @@ save_fig(fig, 'figures/fig_placebo.pdf')
 **Scene**: Lower-triangle heatmap with hierarchical clustering dendrogram, significance stars in cells, variable grouping color bars.
 
 ```python
-import numpy as np, matplotlib.pyplot as plt, seaborn as sns
+import numpy as np, matplotlib.pyplot as plt, seaborn as sns; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.stats import pearsonr
 from _utils.plot_utils import setup_style, save_fig, COLORS, _lighten
@@ -340,7 +340,7 @@ ax_dendro.tick_params(left=False, labelleft=False, bottom=False)
 
 ax_heat = fig.add_subplot(gs[1])
 mask = np.triu(np.ones_like(corr, dtype=bool), k=1)
-sns.heatmap(corr, mask=mask, annot=False, cmap='coolwarm', center=0, square=True,
+sns.heatmap(corr, mask=mask, annot=False, cmap=palette_cmap('diverging'), center=0, square=True,
             linewidths=1.0, linecolor='white', xticklabels=labels, yticklabels=labels,
             cbar_kws={'shrink': 0.7, 'label': 'Correlation'}, ax=ax_heat, vmin=-1, vmax=1)
 
@@ -350,7 +350,7 @@ for i in range(n_vars):
             val = corr[i, j]
             p = pvals[i, j] if i != j else 0
             stars = '***' if p < 0.001 else ('**' if p < 0.01 else ('*' if p < 0.05 else ''))
-            txt_color = 'white' if abs(val) > 0.55 else 'black'
+            txt_color = contrast_text(ax_heat.collections[0].cmap(ax_heat.collections[0].norm(val)))
             ax_heat.text(j + 0.5, i + 0.5, f'{val:.2f}{stars}', ha='center', va='center',
                          fontsize=8.5, color=txt_color, fontweight='bold' if i == j else 'normal')
 
@@ -878,7 +878,7 @@ save_fig(fig, 'figures/fig_prediction_ci.pdf')
 **Scene**: Multi-model accuracy matrix with rank annotations ①②③, sorted rows, best-in-column bold borders.
 
 ```python
-import numpy as np, matplotlib.pyplot as plt
+import numpy as np, matplotlib.pyplot as plt; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
 setup_style()
 
@@ -898,14 +898,14 @@ data = data[sort_idx]; norm = norm[sort_idx]; models = [models[i] for i in sort_
 rank_symbols = ['①','②','③','④','⑤','⑥']
 
 fig, ax = plt.subplots(figsize=(8, 5))
-im = ax.imshow(norm, cmap='YlOrRd', aspect='auto', vmin=0, vmax=1)
+im = ax.imshow(norm, cmap=palette_cmap('sequential'), aspect='auto', vmin=0, vmax=1)
 
 for j in range(data.shape[1]):
     col = data[:, j]
     ranks = np.argsort(np.argsort(col)) if '↓' in metrics[j] else np.argsort(np.argsort(-col))
     best_idx = np.argmin(col) if '↓' in metrics[j] else np.argmax(col)
     for i in range(data.shape[0]):
-        txt_color = 'white' if norm[i, j] > 0.75 or norm[i, j] < 0.25 else 'black'
+        txt_color = contrast_text(im.cmap(im.norm(norm[i, j])))
         w = 'bold' if i == best_idx else 'normal'
         rank_str = f' {rank_symbols[ranks[i]]}' if ranks[i] < 3 else ''
         ax.text(j, i, f'{data[i,j]:.2f}{rank_str}', ha='center', va='center',
@@ -916,12 +916,12 @@ for j in range(data.shape[1]):
 
 ax.set_xticks(range(len(metrics))); ax.set_xticklabels(metrics, fontsize=10.5)
 ax.set_yticks(range(len(models))); ax.set_yticklabels(models, fontsize=10.5)
-cbar = fig.colorbar(im, ax=ax, shrink=0.7, pad=0.02)
-cbar.set_label('Normalized Score\n(1=Best, 0=Worst)', fontsize=9)
+cbar = fig.colorbar(im, ax=ax, shrink=0.7, pad=0.20)
+cbar.set_label('Normalized Score\n(0=Best, 1=Worst)', fontsize=9)
 ax.spines[:].set_visible(False)
 ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False)
 for i in range(len(models)):
-    ax.text(len(metrics)+0.1, i, f'Avg: {avg_score[sort_idx[i]]:.2f}', ha='left', va='center', fontsize=8, color=COLORS['text'])
+    ax.text(len(metrics)-0.25, i, f'Avg: {avg_score[sort_idx[i]]:.2f}', ha='left', va='center', fontsize=8, color=COLORS['text'])
 fig.tight_layout()
 save_fig(fig, 'figures/fig_model_accuracy_heatmap.pdf')
 ```

@@ -1,10 +1,10 @@
-<meta charset="utf-8"><style>body{font:14px monospace}span:target{background:#fff0a0}a{color:#888;text-decoration:none}span{display:inline-block;min-width:100%}</style><pre><span id="L1"><a href="#L1">   1</a> import numpy as np</span>
+<meta charset="utf-8"><style>body{font:14px monospace}span:target{background:#fff0a0}a{color:#888;text-decoration:none}span{display:inline-block;min-width:100%}</style><pre><span id="L1"><a href="#L1">   1</a> import numpy as np; from _utils.vivid_config import palette_colors</span>
 <span id="L2"><a href="#L2">   2</a> import matplotlib.pyplot as plt</span>
 <span id="L3"><a href="#L3">   3</a> from matplotlib.gridspec import GridSpec</span>
 <span id="L4"><a href="#L4">   4</a> from matplotlib.colors import LinearSegmentedColormap</span>
 <span id="L5"><a href="#L5">   5</a> from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten</span>
 <span id="L6"><a href="#L6">   6</a> </span>
-<span id="L7"><a href="#L7">   7</a> setup_style()</span>
+<span id="L7"><a href="#L7">   7</a> setup_style(); scale_colors = palette_colors()</span>
 <span id="L8"><a href="#L8">   8</a> np.random.seed(42)</span>
 <span id="L9"><a href="#L9">   9</a> </span>
 <span id="L10"><a href="#L10">  10</a> # === 模拟 2 个变量在 30×30 网格上的取值 ===</span>
@@ -15,11 +15,11 @@
 <span id="L15"><a href="#L15">  15</a> var_a = (var_a - var_a.min()) / (var_a.max() - var_a.min())</span>
 <span id="L16"><a href="#L16">  16</a> var_b = (var_b - var_b.min()) / (var_b.max() - var_b.min())</span>
 <span id="L17"><a href="#L17">  17</a> </span>
-<span id="L18"><a href="#L18">  18</a> # === 3×3 双变量配色（X 维度用 PALETTE[0] 渐变，Y 维度用 PALETTE[1] 渐变，组合产生中间色）===</span>
+<span id="L18"><a href="#L18">  18</a> # === 3×3 双变量配色（X 维度用 scale_colors[0] 渐变，Y 维度用 scale_colors[1] 渐变，组合产生中间色）===</span>
 <span id="L19"><a href="#L19">  19</a> def bivariate_color(a, b):</span>
 <span id="L20"><a href="#L20">  20</a>     &quot;&quot;&quot;a, b in [0,1] -&gt; RGB. 用两个主色的加权混合。&quot;&quot;&quot;</span>
-<span id="L21"><a href="#L21">  21</a>     c1 = np.array([int(PALETTE[0].lstrip(&#x27;#&#x27;)[i:i+2], 16)/255 for i in (0,2,4)])  # 蓝</span>
-<span id="L22"><a href="#L22">  22</a>     c2 = np.array([int(PALETTE[1].lstrip(&#x27;#&#x27;)[i:i+2], 16)/255 for i in (0,2,4)])  # 橙</span>
+<span id="L21"><a href="#L21">  21</a>     c1 = np.array([int(scale_colors[0].lstrip(&#x27;#&#x27;)[i:i+2], 16)/255 for i in (0,2,4)])  # 蓝</span>
+<span id="L22"><a href="#L22">  22</a>     c2 = np.array([int(scale_colors[1].lstrip(&#x27;#&#x27;)[i:i+2], 16)/255 for i in (0,2,4)])  # 橙</span>
 <span id="L23"><a href="#L23">  23</a>     base = np.array([0.97, 0.97, 0.97])  # 浅灰底</span>
 <span id="L24"><a href="#L24">  24</a>     return base * (1 - 0.5*a - 0.5*b) + c1 * 0.5*a + c2 * 0.5*b</span>
 <span id="L25"><a href="#L25">  25</a> </span>
@@ -54,8 +54,8 @@
 <span id="L54"><a href="#L54">  54</a> ax_leg.set_xticks([0, 1, 2]); ax_leg.set_yticks([0, 1, 2])</span>
 <span id="L55"><a href="#L55">  55</a> ax_leg.set_xticklabels([&#x27;低&#x27;, &#x27;中&#x27;, &#x27;高&#x27;], fontsize=8)</span>
 <span id="L56"><a href="#L56">  56</a> ax_leg.set_yticklabels([&#x27;低&#x27;, &#x27;中&#x27;, &#x27;高&#x27;], fontsize=8)</span>
-<span id="L57"><a href="#L57">  57</a> ax_leg.set_xlabel(&#x27;变量 A →&#x27;, fontsize=9, color=PALETTE[0], fontweight=&#x27;bold&#x27;)</span>
-<span id="L58"><a href="#L58">  58</a> ax_leg.set_ylabel(&#x27;变量 B →&#x27;, fontsize=9, color=PALETTE[1], fontweight=&#x27;bold&#x27;)</span>
+<span id="L57"><a href="#L57">  57</a> ax_leg.set_xlabel(&#x27;变量 A →&#x27;, fontsize=9, color=scale_colors[0], fontweight=&#x27;bold&#x27;)</span>
+<span id="L58"><a href="#L58">  58</a> ax_leg.set_ylabel(&#x27;变量 B →&#x27;, fontsize=9, color=scale_colors[1], fontweight=&#x27;bold&#x27;)</span>
 <span id="L59"><a href="#L59">  59</a> ax_leg.set_title(&#x27;图例&#x27;, fontsize=9, color=COLORS[&#x27;text&#x27;], pad=4)</span>
 <span id="L60"><a href="#L60">  60</a> for sp in ax_leg.spines.values(): sp.set_edgecolor(COLORS[&#x27;grid&#x27;]); sp.set_linewidth(0.5)</span>
 <span id="L61"><a href="#L61">  61</a> ax_leg.tick_params(length=0)</span>
@@ -67,5 +67,4 @@
 <span id="L67"><a href="#L67">  67</a>                     fontsize=7, color=COLORS[&#x27;text&#x27;], fontweight=&#x27;bold&#x27;)</span>
 <span id="L68"><a href="#L68">  68</a> </span>
 <span id="L69"><a href="#L69">  69</a> fig.tight_layout()</span>
-<span id="L70"><a href="#L70">  70</a> save_fig(fig, &#x27;figures/fig_bivariate.pdf&#x27;)</span>
-</pre>
+<span id="L70"><a href="#L70">  70</a> save_fig(fig, &#x27;figures/fig_bivariate.pdf&#x27;)</span></pre>

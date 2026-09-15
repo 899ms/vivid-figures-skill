@@ -15,10 +15,25 @@ spec.loader.exec_module(review)
 
 
 def source(tid):
-    return (ROOT / 'catalog/sources' / tid / 'original.py').read_text(encoding='utf8')
+    cards=json.loads((ROOT/'catalog/cards.json').read_text(encoding='utf8'))['cards']
+    card=next(c for c in cards if c['id']==tid)
+    return (ROOT/'catalog'/card['source']['original_code']).read_text(encoding='utf8')
 
 
 class StyleTests(unittest.TestCase):
+    def test_appended_data_does_not_hide_drawing_loop(self):
+        original = 'groups=[]\nfor x in data:\n groups.append(x)\nfor g in groups:\n ax.fill_between(t,0,g,alpha=.6)\n'
+        records = review.inspect_source(original)
+        self.assertTrue(any(r['method']=='fill_between' for r in records))
+        changed = original.replace('ax.fill_between(t,0,g,alpha=.6)', 'pass')
+        self.assertTrue(any(f['kind']=='operation_not_found' for f in review.compare_sources(original,changed)['findings']))
+
+    def test_plotly_transparency_and_missing_trace_are_detected(self):
+        original = 'fig=go.Figure(go.Volume(x=x,y=y,z=z,value=v,opacity=.1,surface_count=25))'
+        changed = original.replace('opacity=.1','opacity=1')
+        self.assertTrue(any(f.get('parameter')=='opacity' for f in review.compare_sources(original,changed)['findings']))
+        self.assertTrue(any(f['kind']=='operation_not_found' for f in review.compare_sources(original,'fig=go.Figure()')['findings']))
+
     def test_real_opacity_order_regression(self):
         # Reduced from the weekly bootstrap plot: bounds changed legitimately,
         # while the outer band's opacity was accidentally reversed.

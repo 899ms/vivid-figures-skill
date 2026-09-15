@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
@@ -59,7 +59,7 @@ for i in range(n_samples):
                             fontsize=7, color=COLORS['ref_line'], transform=ax_err.transAxes)
         else:
             error = np.random.rand(64, 64) * (0.1 if method == 'Ours' else 0.3 if method == 'Method A' else 0.5)
-            ax_err.imshow(error, cmap='hot', vmin=0, vmax=0.5)
+            ax_err.imshow(error, cmap=palette_cmap('sequential'), vmin=0, vmax=0.5)
             ax_err.axis('off')
             # PSNR/SSIM annotation
             if method in psnr_scores:

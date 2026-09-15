@@ -50,9 +50,23 @@ def load_config(workspace=None):
 
 
 def palette_colors(config=None):
+    """Original color order, retained for continuous color scales."""
     config = load_config() if config is None else config
     key = palette_id(config.get('palette'))
     return list(config['colors'] if key == 'custom' else registry()['palettes'][key]['colors'])
+
+
+def categorical_colors(config=None):
+    """Fixed category order; custom palettes keep the user's exact order."""
+    config = load_config() if config is None else config
+    colors = palette_colors(config)
+    key = palette_id(config.get('palette'))
+    if key == 'custom':
+        return colors
+    order = registry()['palettes'][key].get('category_order', list(range(len(colors))))
+    if sorted(order) != list(range(len(colors))):
+        raise ValueError(f'Invalid category_order for palette: {key}')
+    return [colors[i] for i in order]
 
 
 def write_config(workspace, **updates):

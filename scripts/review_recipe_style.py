@@ -15,9 +15,12 @@ import sys
 UNKNOWN = object()
 DRAW = set('plot scatter bar barh hist stairs step fill fill_between fill_betweenx violinplot boxplot heatmap imshow pcolormesh contour contourf plot_surface plot_trisurf pie hexbin quiver streamplot errorbar hlines vlines axhline axvline axhspan axvspan annotate text colorbar add_patch add_collection add_collection3d set_alpha set_facecolor set_edgecolor set_linewidth'.split())
 DRAW.update('PathPatch Rectangle Polygon Ellipse Circle FancyArrowPatch PolyCollection Poly3DCollection LineCollection kdeplot histplot regplot stackplot _lighten'.split())
+DRAW.update('Sunburst Scatter Scatter3d Cone Isosurface Volume Surface Mesh3d add_trace initialize_from_matrix'.split())
 PARAMS = set('alpha linewidth linewidths lw edgecolor edgecolors marker markeredgecolor markeredgewidth linestyle linestyles ls fill hatch cmap levels zdir center vmin vmax mask annot yerr xerr showmeans showmedians showextrema zorder'.split())
+PARAMS.update('opacity colorscale cmin cmax isomin isomax surface_count sizeref sizemode textinfo stackgroup baseline caps contours flatshading'.split())
 DATA_KEYS = {'levels', 'vmin', 'vmax', 'center', 'mask', 'yerr', 'xerr'}
 STYLE_DICTS = {'boxprops', 'medianprops', 'whiskerprops', 'capprops', 'flierprops', 'wedgeprops', 'arrowprops'}
+STYLE_DICTS.update({'marker', 'line', 'link_kws', 'label_kws'})
 
 
 def literal(node, env):
@@ -112,6 +115,14 @@ def inspect_source(source):
 
     def block(statements, env, context=()):
         for node in statements:
+            # A list built through append/extend is not still its initial literal [].
+            # Conservatively discard that value, including mutations inside loops;
+            # otherwise later drawing loops can be incorrectly treated as empty.
+            for call in ast.walk(node):
+                if (isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute)
+                        and call.func.attr in {'append', 'extend', 'insert', 'pop', 'clear', 'remove', 'sort', 'reverse', 'update', 'setdefault'}
+                        and isinstance(call.func.value, ast.Name)):
+                    env[call.func.value.id] = UNKNOWN
             if isinstance(node, (ast.For, ast.AsyncFor)):
                 values = literal(node.iter, env)
                 if isinstance(values, (list, tuple)) and len(values) <= 64 and expansion[0] + len(values) <= 256:

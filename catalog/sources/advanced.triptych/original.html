@@ -1,4 +1,4 @@
-<meta charset="utf-8"><style>body{font:14px monospace}span:target{background:#fff0a0}a{color:#888;text-decoration:none}span{display:inline-block;min-width:100%}</style><pre><span id="L1"><a href="#L1">   1</a> import numpy as np</span>
+<meta charset="utf-8"><style>body{font:14px monospace}span:target{background:#fff0a0}a{color:#888;text-decoration:none}span{display:inline-block;min-width:100%}</style><pre><span id="L1"><a href="#L1">   1</a> import numpy as np; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text</span>
 <span id="L2"><a href="#L2">   2</a> import matplotlib.pyplot as plt</span>
 <span id="L3"><a href="#L3">   3</a> from matplotlib.gridspec import GridSpec</span>
 <span id="L4"><a href="#L4">   4</a> from matplotlib.patches import FancyArrowPatch</span>
@@ -27,7 +27,7 @@
 <span id="L27"><a href="#L27">  27</a> axes_img = []</span>
 <span id="L28"><a href="#L28">  28</a> for col in range(3):</span>
 <span id="L29"><a href="#L29">  29</a>     ax = fig.add_subplot(gs[1, col])</span>
-<span id="L30"><a href="#L30">  30</a>     im = ax.imshow(images[col], cmap=&#x27;viridis&#x27;, vmin=0, vmax=v,</span>
+<span id="L30"><a href="#L30">  30</a>     im = ax.imshow(images[col], cmap=palette_cmap(&#x27;sequential&#x27;), vmin=0, vmax=v,</span>
 <span id="L31"><a href="#L31">  31</a>                    interpolation=&#x27;bilinear&#x27;)</span>
 <span id="L32"><a href="#L32">  32</a>     ax.set_title(titles[col], fontsize=11, fontweight=&#x27;bold&#x27;,</span>
 <span id="L33"><a href="#L33">  33</a>                  color=COLORS[&#x27;text&#x27;], pad=8)</span>
@@ -37,7 +37,7 @@
 <span id="L37"><a href="#L37">  37</a> # === 顶部共享色条 ===</span>
 <span id="L38"><a href="#L38">  38</a> cbar_ax = fig.add_subplot(gs[0, :])</span>
 <span id="L39"><a href="#L39">  39</a> cbar = fig.colorbar(axes_img[0][1], cax=cbar_ax, orientation=&#x27;horizontal&#x27;)</span>
-<span id="L40"><a href="#L40">  40</a> cbar.set_label(&#x27;归一化激活&#x27;, fontsize=8)</span>
+<span id="L40"><a href="#L40">  40</a> cbar.set_label(&#x27;归一化激活&#x27;, fontsize=8); cbar.ax.xaxis.set_label_position(&#x27;top&#x27;); cbar.ax.xaxis.set_ticks_position(&#x27;top&#x27;)</span>
 <span id="L41"><a href="#L41">  41</a> cbar.ax.tick_params(labelsize=7, length=2)</span>
 <span id="L42"><a href="#L42">  42</a> cbar.outline.set_linewidth(0.4)</span>
 <span id="L43"><a href="#L43">  43</a> cbar.outline.set_edgecolor(COLORS[&#x27;grid&#x27;])</span>
@@ -60,5 +60,4 @@
 <span id="L60"><a href="#L60">  60</a> add_arrow(fig, axes_img[0][0], axes_img[1][0], &#x27;Encoder&#x27;)</span>
 <span id="L61"><a href="#L61">  61</a> add_arrow(fig, axes_img[1][0], axes_img[2][0], &#x27;Decoder&#x27;)</span>
 <span id="L62"><a href="#L62">  62</a> </span>
-<span id="L63"><a href="#L63">  63</a> save_fig(fig, &#x27;figures/fig_triptych.pdf&#x27;)</span>
-</pre>
+<span id="L63"><a href="#L63">  63</a> save_fig(fig, &#x27;figures/fig_triptych.pdf&#x27;)</span></pre>

@@ -1,4 +1,4 @@
-from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
+from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 setup_style()
 import matplotlib.pyplot as plt
 import numpy as np
@@ -52,7 +52,7 @@ ordered_norm = norm_ext[row_order]
 ordered_data = data_ext[row_order]
 ordered_methods = [methods[i] for i in row_order]
 
-im = ax.imshow(ordered_norm, cmap='YlOrRd', aspect='auto', vmin=0, vmax=1)
+im = ax.imshow(ordered_norm, cmap=palette_cmap('sequential'), aspect='auto', vmin=0, vmax=1)
 ax.set_xticks(range(len(metrics_ext)))
 ax.set_xticklabels(metrics_ext, fontsize=10)
 ax.set_yticks(range(len(methods)))
@@ -80,7 +80,7 @@ for j in range(len(metrics_ext)):
         rank_idx = i_orig
         rank_label = rank_symbols[rank_idx] if rank_idx < len(rank_symbols) else ''
 
-        color = 'white' if ordered_norm[i_display, j] > 0.75 or ordered_norm[i_display, j] < 0.25 else 'black'
+        color = contrast_text(im.cmap(im.norm(ordered_norm[i_display, j])))
         weight = 'bold' if rank_idx == 0 else 'normal'
 
         ax.text(j, i_display, f'{val_str}\n{rank_label}', ha='center', va='center',

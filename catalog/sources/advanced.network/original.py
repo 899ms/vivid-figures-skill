@@ -1,5 +1,5 @@
-from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
-setup_style()
+from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten; from _utils.vivid_config import palette_colors
+setup_style(); scale_colors = palette_colors()
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
@@ -55,7 +55,7 @@ for i, comm in enumerate(communities):
 edges = G.edges()
 edge_weights = [G[u][v].get('weight', 1) for u, v in edges]
 max_w = max(edge_weights) if edge_weights else 1
-cmap_edge = mcolors.LinearSegmentedColormap.from_list('ew', [_lighten(PALETTE[0], 0.8), COLORS['ref_line']])
+cmap_edge = mcolors.LinearSegmentedColormap.from_list('ew', [_lighten(scale_colors[0], 0.8), COLORS['ref_line']])
 for (u, v), w in zip(edges, edge_weights):
     x0, y0 = pos[u]
     x1, y1 = pos[v]

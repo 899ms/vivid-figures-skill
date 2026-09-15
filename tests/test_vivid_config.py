@@ -45,6 +45,7 @@ class ConfigTests(unittest.TestCase):
         colors = ['#ABCDEF', '#123456', '#BC986A']
         vc.write_config(self.root, palette='custom', colors=colors, title='existing', style='clean_open')
         self.assertEqual(vc.palette_colors(), colors)
+        self.assertEqual(vc.categorical_colors(), colors)
         vc.write_config(self.root, palette='blue-pink')
         config = vc.load_config()
         self.assertEqual(config['title'], 'existing')
@@ -63,9 +64,23 @@ class ConfigTests(unittest.TestCase):
         for name, item in vc.registry()['palettes'].items():
             vc.write_config(self.root, palette=name)
             pu.setup_style()
-            self.assertEqual(pu.PALETTE, item['colors'])
-            self.assertEqual(pu.COLORS['primary'], item['colors'][0])
+            expected = vc.categorical_colors()
+            self.assertEqual(pu.PALETTE, expected)
+            self.assertEqual(pu.COLORS['primary'], expected[0])
+            self.assertEqual(matplotlib.rcParams['axes.prop_cycle'].by_key()['color'], expected)
             self.assertFalse(matplotlib.rcParams['axes.spines.top'])
+
+    def test_fixed_category_order_keeps_original_scale_and_explicit_lists(self):
+        import plot_utils as pu
+        for name, item in vc.registry()['palettes'].items():
+            vc.write_config(self.root, palette=name)
+            raw = list(item['colors'])
+            pu.setup_style(name)
+            self.assertEqual(pu.PALETTE, vc.categorical_colors())
+            self.assertCountEqual(pu.PALETTE, raw)
+            self.assertEqual(vc.palette_colors(), raw)
+        pu.setup_style(['#123456', '#ABCDEF'])
+        self.assertEqual(pu.PALETTE, ['#123456', '#ABCDEF'])
 
     def test_bootstrap_writes_neutral_files_and_preserves_user_edits(self):
         (self.root / '_utils').mkdir()

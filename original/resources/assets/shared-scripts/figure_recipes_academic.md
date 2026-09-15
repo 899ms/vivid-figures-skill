@@ -269,7 +269,7 @@ save_fig(fig, 'figures/fig_tsne.pdf')
 **Upgrades**: Row/column dendrograms for clustering, attention entropy annotation per row, refined colorbar.
 
 ```python
-import numpy as np
+import numpy as np; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import seaborn as sns
@@ -313,7 +313,7 @@ for spine in ax_dleft.spines.values():
 
 # Main heatmap
 ax_heat = fig.add_subplot(gs[1, 1])
-im = ax_heat.imshow(attn, cmap='YlOrRd', aspect='auto')
+im = ax_heat.imshow(attn, cmap=palette_cmap('sequential'), aspect='auto')
 ax_heat.set_xticks(range(n))
 ax_heat.set_xticklabels(tokens, rotation=45, ha='right', fontsize=8)
 ax_heat.set_yticks(range(n))
@@ -326,7 +326,7 @@ for i in range(n):
     for j in range(n):
         if attn[i, j] > 0.12:
             ax_heat.text(j, i, f'{attn[i, j]:.2f}', ha='center', va='center',
-                         fontsize=6.5, color='white' if attn[i, j] > 0.25 else 'black')
+                         fontsize=6.5, color=contrast_text(im.cmap(im.norm(attn[i, j]))))
 
 # Attention entropy annotation (right side)
 entropy = -np.sum(attn * np.log(attn + 1e-10), axis=1)
@@ -674,7 +674,7 @@ save_fig(fig, 'figures/fig_loss_landscape.pdf')
 **Upgrades**: SSIM/PSNR score annotations, error map row, red box highlights on key regions.
 
 ```python
-import numpy as np
+import numpy as np; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
@@ -735,7 +735,7 @@ for i in range(n_samples):
                             fontsize=7, color=COLORS['ref_line'], transform=ax_err.transAxes)
         else:
             error = np.random.rand(64, 64) * (0.1 if method == 'Ours' else 0.3 if method == 'Method A' else 0.5)
-            ax_err.imshow(error, cmap='hot', vmin=0, vmax=0.5)
+            ax_err.imshow(error, cmap=palette_cmap('sequential'), vmin=0, vmax=0.5)
             ax_err.axis('off')
             # PSNR/SSIM annotation
             if method in psnr_scores:

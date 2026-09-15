@@ -57,3 +57,7 @@ ID：`empirical.prediction_accuracy_heatmap`
 - 源码：[L21–21](../sources/empirical.prediction_accuracy_heatmap/original.html#L21) · [L31–32](../sources/empirical.prediction_accuracy_heatmap/original.html#L31) · [L34–35](../sources/empirical.prediction_accuracy_heatmap/original.html#L34) · [L44–44](../sources/empirical.prediction_accuracy_heatmap/original.html#L44)
 
 按现有审图流程对照实际输出；有疑问时可用[源码差异提示](../../template-fidelity.md)。
+
+## 项目配色
+
+热图默认读取项目配色；连续插值、中性色、透明度及数据归一化保留，数值文字按实际底色选择对比色。

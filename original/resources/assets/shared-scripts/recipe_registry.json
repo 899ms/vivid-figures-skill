@@ -35,7 +35,7 @@
       "file": "figure_recipes_basic.md",
       "title": "热力图（fig.add_axes 手动布局 + 聚类树状图 + 下三角遮罩 + 分组色条）",
       "legacy": "basic #5",
-      "contentSha256": "0aa37b821e892d3f5992a1952dd42a765bc19c2e8d2fe992a8319854d2ccbd21"
+      "contentSha256": "fa4d50510449fe4b5ffc7db3ba3878ddd0762191e0bbe1779e072b86764246f6"
     },
     {
       "id": "basic.donut",
@@ -175,28 +175,28 @@
       "file": "figure_recipes_advanced.md",
       "title": "Dot Plot with CI — 点图+置信区间（按显著性渐变着色 + 汇总菱形）",
       "legacy": "advanced #13",
-      "contentSha256": "42cc089c179ad4179e3d5a2ca144fdf957ce645ef3f1fb8dbedf0251426cd8e6"
+      "contentSha256": "c35da3f410a20313817179674a8cf40adee7183649c7943290b1f8ecf342cf1e"
     },
     {
       "id": "advanced.cluster_heatmap",
       "file": "figure_recipes_advanced.md",
       "title": "Cluster Heatmap — 聚类热力图（带树状图 + 聚类边界 + 轮廓系数标注）",
       "legacy": "advanced #14",
-      "contentSha256": "e97fe0e06ae926a07aca7d5af9e49f10189b221cb99af696c47b9a4fde24dd89"
+      "contentSha256": "f8ab29bda751be36810ae7363f6497d59485f488c67c00168ac1c6e144c7ada9"
     },
     {
       "id": "advanced.network",
       "file": "figure_recipes_advanced.md",
       "title": "Network Graph — 网络图（节点大小映射度 + 社区凸包 + 边权渐变）",
       "legacy": "advanced #15",
-      "contentSha256": "e7affdf5061f9c68b1eb42b7227466da47ce0de88698430066d65251ec55b8ba"
+      "contentSha256": "8e3413982eae71c3c36d8135464ae8b95ebb9dd1f344b715d24ee85a961590f2"
     },
     {
       "id": "advanced.method_heatmap",
       "file": "figure_recipes_advanced.md",
       "title": "Method Comparison Heatmap — 方法对比热力图（排名标注 🥇🥈🥉 + 树状图 + 列最优高亮 + 综合排名）",
       "legacy": "advanced #16",
-      "contentSha256": "829a614a6268292153e053341a23a10bb6b639e06913d90437a3db0efff0a971"
+      "contentSha256": "03641ff2a1050da7c7af89f9d499ad1f8fe226013ec9758708e72de5ea6892ee"
     },
     {
       "id": "advanced.parallel_coordinates",
@@ -280,14 +280,14 @@
       "file": "figure_recipes_advanced.md",
       "title": "Calendar Heatmap — 日历热图（一年 7×53 网格 + 月份分隔 + 顶部色条）",
       "legacy": "advanced #28",
-      "contentSha256": "dd197dddd8021fc9ea97421ed11701096bde82f80faf0abd8e69c638ad13a01f"
+      "contentSha256": "a6f98186e891864b0ce417d847c44f58d93e20fbf067947353b52fa6de51e62a"
     },
     {
       "id": "advanced.hovmoller",
       "file": "figure_recipes_advanced.md",
       "title": "Hovmöller — 时空双轴图（时间纵 + 空间横 + 偏离均值色阶 + 事件标注）",
       "legacy": "advanced #29",
-      "contentSha256": "c3ec9a13eef08b4302c69f256950d8b441e1149eea7ebed1b1aeb36a60461d93"
+      "contentSha256": "46267dd3f6cb9aee4e81f99af3bc1446ff1d90eb9b9b938cbaae703271b7eeaf"
     },
     {
       "id": "advanced.pair_plot",
@@ -301,7 +301,7 @@
       "file": "figure_recipes_advanced.md",
       "title": "Triptych — 三联图（input / 中间表示 / output 横向对比 + 流向箭头）",
       "legacy": "advanced #31",
-      "contentSha256": "886ef786bc02cf719f3098ce7308dd4188c4e2d36da02d33ffe355ea380f38a3"
+      "contentSha256": "2d81d215d00d7d5ba9b524e7499ea86c7c7de064797e394da2878abd849f50e2"
     },
     {
       "id": "advanced.posterior_trace_density",
@@ -322,7 +322,7 @@
       "file": "figure_recipes_advanced.md",
       "title": "Bivariate Choropleth / 双变量热图 — 二维联合分布（3×3 配色矩阵 + 主图 + 图例）",
       "legacy": "advanced #34",
-      "contentSha256": "aa3de37cd0389f3f391de6148172604af044d80ff0776b7dbcf12e9635bf70e0"
+      "contentSha256": "b68244d3557b44a961f82a56f5b87e73cf2544fb093ba8b6776529eed891f874"
     },
     {
       "id": "empirical.forest",
@@ -357,7 +357,7 @@
       "file": "figure_recipes_empirical.md",
       "title": "Correlation Heatmap",
       "legacy": "empirical #5",
-      "contentSha256": "fd510dfbd069505f683e0d914acc0106ea1735ff6d55fe75ff8e355d2d516693"
+      "contentSha256": "18746276a4ddf1f0bf367861e62fd0ed9068a07a3afee7704d4be7f0b6f6028f"
     },
     {
       "id": "empirical.raincloud",
@@ -420,7 +420,7 @@
       "file": "figure_recipes_empirical.md",
       "title": "Multi-Model Prediction Accuracy Heatmap",
       "legacy": "empirical #14",
-      "contentSha256": "9a2222ac5f46331dcdede6e90b55e56ee169f0dd8dc235194ebd8bd0dd344a16"
+      "contentSha256": "6e72911e57706e2e920352f481edd849f05b766c4970321a72309eb1f79fd71f"
     },
     {
       "id": "empirical.prediction_error_raincloud",
@@ -497,7 +497,7 @@
       "file": "figure_recipes_academic.md",
       "title": "Attention Heatmap — 注意力热力图",
       "legacy": "academic #4",
-      "contentSha256": "8796ef6e40e317df8b34250dedd99f6e3411e976c0ea2d26830d5241fb2b8299"
+      "contentSha256": "8e7259092772ebc8232c207ca43562e556b82418c3c7cce3513f8dc30c37fcb3"
     },
     {
       "id": "academic.radar",
@@ -532,7 +532,7 @@
       "file": "figure_recipes_academic.md",
       "title": "Learning Rate Schedule — 学习率调度曲线",
       "legacy": "academic #9",
-      "contentSha256": "30c4940171ce7307e0a6858ed986d72fb8b419ac303ea66930b0c46536a913ef"
+      "contentSha256": "659cc34d7339b37cf58c0527a15bb470a67529a8ee72554b12a3005396d10561"
     },
     {
       "id": "academic.latent_interpolation",
@@ -623,7 +623,7 @@
       "file": "figure_recipes_competition.md",
       "title": "混淆矩阵热力图",
       "legacy": "competition #10",
-      "contentSha256": "f352be5ad034bc07999bb858a981c8cad5ef5d9223d05e1e5be80ca6f80f42ff"
+      "contentSha256": "4dca0a80c0f2cab62b5e2858f8c1da3a6b51ce2685f94532c4bc2b26acf25468"
     },
     {
       "id": "competition.roc",
@@ -637,7 +637,7 @@
       "file": "figure_recipes_competition.md",
       "title": "相关性矩阵图（下三角 + 数值标注）",
       "legacy": "competition #12",
-      "contentSha256": "54d83ce59dc83b0fc2913e86b6a921246c109b37b07fc0a0c5bc0896180ea168"
+      "contentSha256": "89ba81ab522615e77d1650d909a9371f835d611b018dc8f93c368771ef57be52"
     },
     {
       "id": "competition.gravity_migration",
@@ -679,7 +679,7 @@
       "file": "figure_recipes_competition.md",
       "title": "时空经济热力图",
       "legacy": "competition #18",
-      "contentSha256": "98974c109a9bd5a22212422d21587f9175520bc650114eac49d37d2404463c25"
+      "contentSha256": "04aacf9c46e9299f292ce62b4a297b37d76bbe28a8aefcbf742776503efb3ac9"
     },
     {
       "id": "competition.pareto_surface_3d",
@@ -757,6 +757,230 @@
       "title": "离散状态栅格图（仿真逐帧/逐时隙状态热图）",
       "legacy": "competition #29",
       "contentSha256": "08597a18e66847b97224c9e11a48677c1e0cf62132ef6d852d6ff2ecc226ee60"
+    },
+    {
+      "id": "screenshot.fan_violin_heatmap",
+      "file": "figure_recipes_screenshot.md",
+      "title": "扇形小提琴与热图",
+      "legacy": "screenshot #1",
+      "contentSha256": "01d320e426d991408b5d4a724bedb86e0345e3b43b3f88f7716798694b489876"
+    },
+    {
+      "id": "screenshot.layered_area_3d",
+      "file": "figure_recipes_screenshot.md",
+      "title": "三维分层面积图",
+      "legacy": "screenshot #2",
+      "contentSha256": "0e822547e47650f12069d21e948047bd240f7b1c3736fa6d1260fee8e9810890"
+    },
+    {
+      "id": "screenshot.heatmap_slabs_3d",
+      "file": "figure_recipes_screenshot.md",
+      "title": "三维分层热图",
+      "legacy": "screenshot #3",
+      "contentSha256": "6a3c43883bfce18965ccd97b91f011fe7a1dad85e2e27d3cb4dc9b307e6cda3a"
+    },
+    {
+      "id": "screenshot.sunburst",
+      "file": "figure_recipes_screenshot.md",
+      "title": "多层旭日图",
+      "legacy": "screenshot #4",
+      "contentSha256": "27452ced9c827f4c7563ecf536c3159be77f47a0461719a2887a1a75cee61048"
+    },
+    {
+      "id": "screenshot.peak_stacked_area",
+      "file": "figure_recipes_screenshot.md",
+      "title": "峰值标注堆叠面积图",
+      "legacy": "screenshot #5",
+      "contentSha256": "671513ff83d8e12a1cacdfa834b359da49ade2bcba0eb2aa8e6512b79e20dc4c"
+    },
+    {
+      "id": "screenshot.triangle_heatmap",
+      "file": "figure_recipes_screenshot.md",
+      "title": "双指标三角热图",
+      "legacy": "screenshot #6",
+      "contentSha256": "1ff5f799fb03fa13e29ad5d2293eda2ecbf2c876910077205622b6adc0077b27"
+    },
+    {
+      "id": "screenshot.cone_vortex",
+      "file": "figure_recipes_screenshot.md",
+      "title": "三维涡旋向量图",
+      "legacy": "screenshot #7",
+      "contentSha256": "e71896825b8e73ff1edbe528190ba9eaf742098303e8eb54935b46aa14d5e8c3"
+    },
+    {
+      "id": "screenshot.isosurface",
+      "file": "figure_recipes_screenshot.md",
+      "title": "三维等值面",
+      "legacy": "screenshot #8",
+      "contentSha256": "d248851825b0568571a314e95fceca619786acb1260173dc1a34796a88d6127f"
+    },
+    {
+      "id": "screenshot.spiral_bubbles_3d",
+      "file": "figure_recipes_screenshot.md",
+      "title": "三维螺旋气泡",
+      "legacy": "screenshot #9",
+      "contentSha256": "3511402eef2bae5909ee587d3b4cdeaa23f54d2ed6a319802d9d98d44cbff564"
+    },
+    {
+      "id": "screenshot.volume",
+      "file": "figure_recipes_screenshot.md",
+      "title": "三维体绘制",
+      "legacy": "screenshot #10",
+      "contentSha256": "1eaed8b4aee65546793b64b332bdb1e216b7dbe5959eac9bc86a03336d0f09d2"
+    },
+    {
+      "id": "screenshot.gridded_scatter_3d",
+      "file": "figure_recipes_screenshot.md",
+      "title": "三维网格散点场",
+      "legacy": "screenshot #11",
+      "contentSha256": "f2c1a43aa2e73391c6b04d0395d7821d0fbf928afbf8698ff80e22417e5d3f6e"
+    },
+    {
+      "id": "screenshot.contour_lines_3d",
+      "file": "figure_recipes_screenshot.md",
+      "title": "三维等高线",
+      "legacy": "screenshot #12",
+      "contentSha256": "ecd9c0ad419dcc3cdacadcc92f74da9b8d0aa27f0c37791578bacb8913d19eac"
+    },
+    {
+      "id": "screenshot.block_surface_3d",
+      "file": "figure_recipes_screenshot.md",
+      "title": "三维方柱曲面",
+      "legacy": "screenshot #13",
+      "contentSha256": "040b2e58d27d654f7ac1e436336eebd902a2cfec64b0250e97ab284c8bfeb02a"
+    },
+    {
+      "id": "screenshot.mesh_surface_3d",
+      "file": "figure_recipes_screenshot.md",
+      "title": "三维网格曲面",
+      "legacy": "screenshot #14",
+      "contentSha256": "0dc05e975966fa351c90be5c48338793eb6a36fe3f45f4ffcef12a25f42dcef7"
+    },
+    {
+      "id": "screenshot.depreciation_area",
+      "file": "figure_recipes_screenshot.md",
+      "title": "多型号价格堆叠面积",
+      "legacy": "screenshot #15",
+      "contentSha256": "4f2af909ddd7dcc0be7243c1e25695804bc023217b3477fd2a549e936c80f5ae"
+    },
+    {
+      "id": "screenshot.concentric_bars",
+      "file": "figure_recipes_screenshot.md",
+      "title": "同心环形柱状图",
+      "legacy": "screenshot #16",
+      "contentSha256": "d57a09fc467d0d962171ecc97e567a983abba4e0d6601134a854f64db49a37bb"
+    },
+    {
+      "id": "screenshot.rose",
+      "file": "figure_recipes_screenshot.md",
+      "title": "南丁格尔玫瑰图",
+      "legacy": "screenshot #17",
+      "contentSha256": "159469378b2c4831d99fe27c1190931e215fdaccd347563c83d2264614db6022"
+    },
+    {
+      "id": "screenshot.nested_donut",
+      "file": "figure_recipes_screenshot.md",
+      "title": "嵌套环形图",
+      "legacy": "screenshot #18",
+      "contentSha256": "883fe4060fde3dc8647c75a8714faa01cd23e9d2dfcdad4251b0e367aee78463"
+    },
+    {
+      "id": "screenshot.ranked_arcs",
+      "file": "figure_recipes_screenshot.md",
+      "title": "排名圆弧条形图",
+      "legacy": "screenshot #19",
+      "contentSha256": "ef75b7405e4ea84a9c216787da8302d5053ec7b2d53f32959841ee1f72fd5a35"
+    },
+    {
+      "id": "screenshot.horizon",
+      "file": "figure_recipes_screenshot.md",
+      "title": "正负折叠地平线图",
+      "legacy": "screenshot #20",
+      "contentSha256": "d250cb9770793990c2b9b3ce17a3c713c58b51f41ab168c83d6ec4e5654717d2"
+    },
+    {
+      "id": "screenshot.radial_bars",
+      "file": "figure_recipes_screenshot.md",
+      "title": "极坐标径向柱状图",
+      "legacy": "screenshot #21",
+      "contentSha256": "e9b2d32d06abce5eb034383b47a04eef44c170f81027dddb23fdb4e075c8e1fc"
+    },
+    {
+      "id": "screenshot.chord",
+      "file": "figure_recipes_screenshot.md",
+      "title": "透明弦图",
+      "legacy": "screenshot #22",
+      "contentSha256": "ce184814b73d5675f6f8ebff3cb826931112caab0b089a3e58c28f0ee8f95da8"
+    },
+    {
+      "id": "screenshot.marginal_heatmap",
+      "file": "figure_recipes_screenshot.md",
+      "title": "带边际柱形的表格热图",
+      "legacy": "screenshot #23",
+      "contentSha256": "60f11917637539e807c49daced9b42d0fa4ae751424d0041cb884829d53dda14"
+    },
+    {
+      "id": "screenshot.interval_steps",
+      "file": "figure_recipes_screenshot.md",
+      "title": "阶梯折线与区间带",
+      "legacy": "screenshot #24",
+      "contentSha256": "e3846a021f9f6594f7488e26fc94ec8e05fb0df54fff6ac944347c0758b15a82"
+    },
+    {
+      "id": "screenshot.streamgraph",
+      "file": "figure_recipes_screenshot.md",
+      "title": "双向峰形河流图",
+      "legacy": "screenshot #25",
+      "contentSha256": "584a72af0f17e32d348061a0a1b4969ce6e182e7944786fab568e438813074c1"
+    },
+    {
+      "id": "screenshot.correlation_network",
+      "file": "figure_recipes_screenshot.md",
+      "title": "相关矩阵与连线网络",
+      "legacy": "screenshot #26",
+      "contentSha256": "18d80ecd9f222eb2690b6122e2799a3ad318b94b93776b3a9433ee796636a2df"
+    },
+    {
+      "id": "screenshot.radial_heatmap",
+      "file": "figure_recipes_screenshot.md",
+      "title": "径向环形热图",
+      "legacy": "screenshot #27",
+      "contentSha256": "95148e7d0f5941fcebe8a678c6bcd71d7cf175bfa5c26bd6f707c5fa9bcd4018"
+    },
+    {
+      "id": "screenshot.hexbin",
+      "file": "figure_recipes_screenshot.md",
+      "title": "六边形空间热图",
+      "legacy": "screenshot #28",
+      "contentSha256": "9f489f2a69f5adbd629daea0d9c52b2e8a2a2f6a01b286520b263dd6f5cfe96a"
+    },
+    {
+      "id": "screenshot.classified_scatter",
+      "file": "figure_recipes_screenshot.md",
+      "title": "分类散点与决策区域",
+      "legacy": "screenshot #29",
+      "contentSha256": "0a68741106572943ec3979e57cb200b2f95842fc7824a4336db9ecdf5a65146d"
+    },
+    {
+      "id": "screenshot.polar_scatter",
+      "file": "figure_recipes_screenshot.md",
+      "title": "带背景圆环的极坐标散点",
+      "legacy": "screenshot #30",
+      "contentSha256": "73314a218fe553d9bdd574a787872b8a07fc9b72518156d9a694077768ccd935"
+    },
+    {
+      "id": "screenshot.polar_step_area",
+      "file": "figure_recipes_screenshot.md",
+      "title": "环形刻度阶梯面积图",
+      "legacy": "screenshot #31",
+      "contentSha256": "ea5a376b91104d57a043d2f0f930bcdad747933e68213cedf0da662ec87bf8fd"
+    },
+    {
+      "id": "screenshot.polar_area",
+      "file": "figure_recipes_screenshot.md",
+      "title": "平滑极坐标面积叠加",
+      "legacy": "screenshot #32",
+      "contentSha256": "db9e954f7c234da08f544389e8987dd33534a1b98d40fe9d22a2b6a9e4d8eb1a"
     }
   ]
 }

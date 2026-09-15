@@ -50,3 +50,7 @@ ID：`advanced.triptych`
 - 源码：[L30–31](../sources/advanced.triptych/original.html#L30) · [L39–39](../sources/advanced.triptych/original.html#L39)
 
 按现有审图流程对照实际输出；有疑问时可用[源码差异提示](../../template-fidelity.md)。
+
+## 项目配色
+
+热图默认读取项目配色；连续插值、中性色、透明度及数据归一化保留，数值文字按实际底色选择对比色。

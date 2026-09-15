@@ -62,3 +62,7 @@ ID：`competition.correlation_matrix`
 - 源码：[L16–21](../sources/competition.correlation_matrix/original.html#L16)
 
 按现有审图流程对照实际输出；有疑问时可用[源码差异提示](../../template-fidelity.md)。
+
+## 项目配色
+
+热图默认读取项目配色；连续插值、中性色、透明度及数据归一化保留，数值文字按实际底色选择对比色。

@@ -3,7 +3,7 @@
 **场景**: CV / NLP / AI 定性结果展示。三个等宽子图横向并列，子图间用箭头暗示数据流，共享色标（如适用）。
 
 ```python
-import numpy as np
+import numpy as np; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import FancyArrowPatch
@@ -32,7 +32,7 @@ v = max(np.max(im) for im in images)
 axes_img = []
 for col in range(3):
     ax = fig.add_subplot(gs[1, col])
-    im = ax.imshow(images[col], cmap='viridis', vmin=0, vmax=v,
+    im = ax.imshow(images[col], cmap=palette_cmap('sequential'), vmin=0, vmax=v,
                    interpolation='bilinear')
     ax.set_title(titles[col], fontsize=11, fontweight='bold',
                  color=COLORS['text'], pad=8)
@@ -42,7 +42,7 @@ for col in range(3):
 # === 顶部共享色条 ===
 cbar_ax = fig.add_subplot(gs[0, :])
 cbar = fig.colorbar(axes_img[0][1], cax=cbar_ax, orientation='horizontal')
-cbar.set_label('归一化激活', fontsize=8)
+cbar.set_label('归一化激活', fontsize=8); cbar.ax.xaxis.set_label_position('top'); cbar.ax.xaxis.set_ticks_position('top')
 cbar.ax.tick_params(labelsize=7, length=2)
 cbar.outline.set_linewidth(0.4)
 cbar.outline.set_edgecolor(COLORS['grid'])

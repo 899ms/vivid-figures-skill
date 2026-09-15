@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np; from _utils.palette_maps import palette_cmap, palette_stops, contrast_text
 import matplotlib.pyplot as plt
 from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
 
@@ -22,7 +22,7 @@ fig, ax = plt.subplots(figsize=(7, 5))
 
 # ★ 双向色阶（偏离零）— 用 coolwarm 但反转让暖色=正
 v = np.nanmax(np.abs(data))
-im = ax.imshow(data, aspect='auto', cmap='RdBu_r', vmin=-v, vmax=v,
+im = ax.imshow(data, aspect='auto', cmap=palette_cmap('diverging'), vmin=-v, vmax=v,
                extent=[lons[0], lons[-1], months[-1], months[0]],
                interpolation='bilinear')
 
