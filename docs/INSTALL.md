@@ -2,13 +2,13 @@
 
 [返回首页](../README.md)
 
-安装分两步：先把 Skill 放到 AI 助手能找到的位置，再给它准备可用的 Python 环境。以下以 **Claude Code 的个人级安装**为例，装好后可在多个项目中使用。
+安装分两步：先把 Skill 放到 AI 助手能找到的位置，再给它准备可用的 Python 环境。本仓库采用 [Agent Skills 开放格式](https://agentskills.io/specification)：整个文件夹是一个 Skill，根目录的 `SKILL.md` 是入口。下面先下载到普通目录，再由你使用的助手导入或配置 Skill 搜索路径。开放格式不规定统一的安装目录。
 
 ## 1. 准备基础软件
 
 | 软件 | 用途 | 要求 |
 |---|---|---|
-| Claude Code，或能加载 Agent Skills 的其他助手 | 读数据、执行绘图代码、看图与修图 | 需要文件、终端执行和图像读取能力 |
+| 能加载 Agent Skills 的 AI 助手 | 读数据、执行绘图代码、看图与修图 | 需要文件、终端执行和图像读取能力 |
 | Python | 运行数据分析和绘图代码 | 3.10+ |
 | Git | 下载与更新本仓库 | 使用下方克隆和更新命令时需要 |
 | Bash | 运行随附的图表检查脚本 | Windows 推荐 Git for Windows 的 Git Bash；macOS/Linux 通常已有 |
@@ -23,10 +23,10 @@
 ### Windows：PowerShell
 
 ```powershell
-git clone https://github.com/yjz211/vivid-figures-skill.git "$env:USERPROFILE/.claude/skills/vivid-figures-skill"
-python -m venv "$env:USERPROFILE/.claude/skills/vivid-figures-skill/.venv"
-& "$env:USERPROFILE/.claude/skills/vivid-figures-skill/.venv/Scripts/python.exe" -m pip install --upgrade pip
-& "$env:USERPROFILE/.claude/skills/vivid-figures-skill/.venv/Scripts/python.exe" -m pip install -r "$env:USERPROFILE/.claude/skills/vivid-figures-skill/requirements.txt"
+git clone https://github.com/yjz211/vivid-figures-skill.git "$env:USERPROFILE/agent-skills/vivid-figures-skill"
+python -m venv "$env:USERPROFILE/agent-skills/vivid-figures-skill/.venv"
+& "$env:USERPROFILE/agent-skills/vivid-figures-skill/.venv/Scripts/python.exe" -m pip install --upgrade pip
+& "$env:USERPROFILE/agent-skills/vivid-figures-skill/.venv/Scripts/python.exe" -m pip install -r "$env:USERPROFILE/agent-skills/vivid-figures-skill/requirements.txt"
 ```
 
 这些命令直接调用虚拟环境中的 Python，不需要运行激活脚本。
@@ -34,29 +34,27 @@ python -m venv "$env:USERPROFILE/.claude/skills/vivid-figures-skill/.venv"
 ### macOS / Linux：终端
 
 ```bash
-git clone https://github.com/yjz211/vivid-figures-skill.git "$HOME/.claude/skills/vivid-figures-skill"
-python3 -m venv "$HOME/.claude/skills/vivid-figures-skill/.venv"
-"$HOME/.claude/skills/vivid-figures-skill/.venv/bin/python" -m pip install --upgrade pip
-"$HOME/.claude/skills/vivid-figures-skill/.venv/bin/python" -m pip install -r "$HOME/.claude/skills/vivid-figures-skill/requirements.txt"
+git clone https://github.com/yjz211/vivid-figures-skill.git "$HOME/agent-skills/vivid-figures-skill"
+python3 -m venv "$HOME/agent-skills/vivid-figures-skill/.venv"
+"$HOME/agent-skills/vivid-figures-skill/.venv/bin/python" -m pip install --upgrade pip
+"$HOME/agent-skills/vivid-figures-skill/.venv/bin/python" -m pip install -r "$HOME/agent-skills/vivid-figures-skill/requirements.txt"
 ```
 
 部分 Linux 发行版需要先通过系统包管理器安装 `python3-venv`，才能创建虚拟环境。中文图表需要本机有中文字体；Linux 可安装 Noto Sans CJK，Windows 和 macOS 通常已有可用字体。
 
 `requirements.txt` 包含数据分析、绘图、PDF 预览和空间图表所用的依赖，包括 NumPy、pandas、SciPy、Matplotlib、Seaborn、scikit-learn、Pillow、PyMuPDF 和 GeoPandas 等。第一次完整安装可能需要一些时间。
 
-### 只给一个项目安装
+### 让助手加载 Skill
 
-也可以在目标项目目录执行：
+下载后，在助手的 Skill 管理功能中导入 `vivid-figures-skill` 文件夹，或将它放到该助手文档指定的个人级/项目级 Skill 目录。
 
-```bash
-git clone https://github.com/yjz211/vivid-figures-skill.git .claude/skills/vivid-figures-skill
-```
-
-然后把上面的虚拟环境和依赖安装命令中的路径改为该项目里的 Skill 路径。个人级和项目级选择一种即可。
+- 导入整个文件夹，保留 `original/`、`catalog/`、`templates/` 等相对路径；不要只上传 `SKILL.md`。
+- 若助手能读取文件和执行代码，但不支持自动发现 Skill，可明确让它读取安装目录下的 `SKILL.md` 并按其中引用加载资源。
+- 文件夹内应直接包含 `SKILL.md`。自动发现和调用语法由具体助手决定，不是所有客户端都使用斜杠命令。
 
 ## 3. 让 AI 使用正确的 Python
 
-重新打开 Claude Code，在放有数据的项目里输入：
+重新打开或刷新你使用的 AI 助手，在放有数据的项目里输入：
 
 ```text
 使用 vivid-figures-skill 绘图。

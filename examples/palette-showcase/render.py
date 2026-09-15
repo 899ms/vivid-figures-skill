@@ -1,4 +1,4 @@
-"""Render the README's five color variants of recipe:advanced.ridgeline.
+"""Render the README's coral color example of recipe:advanced.ridgeline.
 
 Input: synthetic_samples.csv (demonstration only). All variants share the
 same data, density estimates, axes, fonts and layout. Native width 6 inches;
@@ -31,8 +31,7 @@ sys.path.insert(0, str(REPO / 'original/resources/assets/shared-scripts'))
 import plot_utils as pu
 from plot_utils import setup_style
 
-OPTIONS = [('coral', '珊瑚青绿'), ('ocean', '海洋暖橙'), ('iris', '鸢尾杏桃'),
-           ('forest', '森林日光'), ('berry', '浆果冰蓝')]
+OPTIONS = [('coral', '珊瑚青绿')]
 
 
 def render(output):

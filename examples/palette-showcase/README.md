@@ -2,7 +2,7 @@
 
 [返回首页](../../README.md)
 
-这五张图用相同数据展示五套配色的效果。绘图参考 `recipe:advanced.ridgeline`（山脊图），保留层叠分布、主题色轮廓、渐变填充和中位数标记。示例是适配后的图件，不是原配方示例的逐像素复制。
+这张图展示珊瑚青绿配色的效果。绘图参考 `recipe:advanced.ridgeline`（山脊图），保留层叠分布、主题色轮廓、渐变填充和中位数标记。示例是适配后的图件，不是原配方示例的逐像素复制。
 
 ## 数据是什么
 
@@ -18,6 +18,6 @@
 python examples/palette-showcase/render.py --output preview-output
 ```
 
-`python` 应使用已安装依赖的解释器。输出五张 PNG 及记录色值、中位数的 `render-info.json`。命令在临时目录中使用 Skill 的原有色板标记接口，颜色直接读取 `color-selection.md`，不改任务或仓库的默认配色。
+`python` 应使用已安装依赖的解释器。输出一张 PNG 及记录色值、中位数的 `render-info.json`。命令在临时目录中使用 Skill 的原有色板标记接口，颜色直接读取 `color-selection.md`，不改任务或仓库的默认配色。
 
-五张图共享数据、密度计算、坐标范围、字体设置和布局，只改变色值。原始绘图资源没有因该示例而修改。
+原始绘图资源没有因该示例而修改。
