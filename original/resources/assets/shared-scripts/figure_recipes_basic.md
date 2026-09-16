@@ -914,7 +914,7 @@ from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten
 setup_style()
 
 np.random.seed(42)
-fig, axes = plt.subplots(2, 2, figsize=(5.0, 4.9))   # ⛔ 2×2 是近方图，上页只显示 4.55in → 原生 5.0in（写 10 会缩到 0.46、刻度腰斩）
+fig, axes = plt.subplots(2, 2, figsize=(5.0, 4.9))   # 示例尺寸；保留模板比例，按实际显示尺寸检查字号与布局
 
 # (a) 折线图 — 渐变填充
 ax = axes[0, 0]

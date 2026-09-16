@@ -3,39 +3,12 @@
 适用于数学建模竞赛（国赛/美赛/MathorCup/统计建模等）。包含收敛曲线、灵敏度分析、Pareto 前沿、雷达图、甘特图、网络路径等竞赛高频图表。
 所有范例假设已执行 `from _utils.plot_utils import setup_style, save_fig, PALETTE, COLORS, _lighten; setup_style()`。
 
-⚠ **图例位置规则**：所有图表统一使用 `loc='best'`，不要硬编码 `'upper right'`。如果数据在右上角会遮挡图例。
-⚠ **标注边界规则**：`ax.annotate` 的 `xytext` 不要超出 `ax.get_xlim()/get_ylim()` 范围。`plot_utils._clamp_texts_to_axes` 会在 savefig 时自动裁剪超出的标注，但最好从源头避免。
+图例、标注和画布以各配方的完整源码为底稿，替换数据后再做必要的局部适配。
+尺寸统一按 [figure_layout_reference.md](figure_layout_reference.md) 的“figsize 与最终显示尺寸”检查，
+不套用固定画布宽度、字号下限或图例位置。`loc='best'` 也不能替代实际看图。
 
-## ⛔⛔ 抄本文件代码前必读：`figsize` 按「长宽比档位」收窄（不是一刀切）
-
-**下面各配方里写的 `figsize=(9,5)` / `(10,8)` / `(12,5)` 等值只是排版占位，照抄会翻车。**
-竞赛论文单栏正文宽仅约 **6.5in**：原生画到 10in，插进论文被缩到 **0.53** →
-刻度 8.5pt 变 **4.5pt**、数据线 lw0.6 变 **0.32pt** → 肉眼就是"坐标轴糊成一团、线条发虚"
-（实测翻车案例：国赛 A 题 `fig_q4_snapshots`，同篇 13 张图有 7 张犯此病）。
-
-**⛔ 不是"一律 ≤7.2"** —— `fig_include_size.py` 按长宽比 `r=高/宽` 分档给上页宽度，
-**原生宽要贴着该档的上页显示宽写**，抄配方时按下表换：
-
-| 图型（长宽比档位） | 上页只显示 | 照这个写 |
-|---|---|---|
-| 单 panel 折线/柱/散点（横图 r≤0.8） | 5.53in | `figsize=(6.0, 3.8)` |
-| 1×2 横排（横图 r≤0.8） | 5.53in | `figsize=(6.0, 2.8)` |
-| **2×2 多 panel（近方图 0.8<r≤1.2）** | **4.55in** | **`figsize=(5.0, 4.9)`** |
-| **等比例几何图 `set_aspect('equal')`（近方）** | **4.55in** | **`figsize=(5.0, 4.8)`** |
-| 横向长条 barh/甘特（多为偏竖 r>1.2） | 3.25in | `figsize=(3.6, 高度按条数算)` |
-
-⛔ **最容易踩：2×2 和等比例几何图是「近方图」，只能给 5.0in 左右。** 写 7.2in 看着不大，
-实际仍被缩到 **0.63** → 刻度 8.5pt 变 5.4pt，白改（`figure_check.sh` 的分档闸会抓）。
-矢量图**略放大无害**，怕的只有"原生远大于上页显示宽"。
-
-配套下限（缩放后才不糊）：**数据线 `lw≥0.9`、刻度字号 ≥8pt、轴标签 ≥9pt**。
-**多 panel 共用 colorbar ⛔ 必须用 gridspec 的 `cax=`，不能用 `ax=axes`** ——
-`save_fig` 内部无条件跑 `tight_layout`，会把 `ax=axes` 预留的空间算掉、面板压到 colorbar 上
-（调 `fraction`/`pad` 治不了，实测过）。写法见 `figure_style_guide.md` 的「多 panel 共用 colorbar」节。
-单 panel 用 `fig.colorbar(sm, ax=ax, fraction=0.046, pad=0.03)` 没问题。
-
-⛔ **要更多信息量就"加 panel 密度"，绝不要"把画布摊大"** —— 画布越大缩得越狠，字反而越小。
-（`figure_check.sh` 有「原生画布尺寸体检」闸会抓 >7.5in 并算出上页字号，别等它报。）
+`save_fig` 保留现有布局，不自动移动标注、裁回轴内或调用 `tight_layout`。
+注释放在轴外时需明确留出画布空间；共用色条沿用模板的 `ax=axes` 或独立 `cax`，按实图核对。
 
 ---
 
@@ -318,7 +291,7 @@ save_fig(fig, 'figures/fig_pareto.pdf')
 # 2. 方向标注箭头放在图边缘空白处，不要和 Pareto 前沿线或数据重叠
 # 3. 方向箭头放在图边缘空白处，不要让标注超出图表边界
 # 4. 非支配解用小圆点（s=20），支配解用更小的点（s=8, alpha=0.3）
-# 5. xytext 偏移必须确保标注框在 xlim/ylim 范围内，plot_utils 会自动裁剪超出的标注
+# 5. 实际查看 xytext 标注与边界和数据的关系；plot_utils 不会自动解决遮挡或裁切
 ```
 
 ---
@@ -664,7 +637,7 @@ y_pred = y_true + np.random.normal(0, 5, n)
 residuals = y_pred - y_true
 std_resid = (residuals - residuals.mean()) / residuals.std()
 
-fig, axes = plt.subplots(2, 2, figsize=(5.0, 4.9))   # ⛔ 2×2 是近方图，上页只显示 4.55in → 原生 5.0in（写 10 会缩到 0.46）
+fig, axes = plt.subplots(2, 2, figsize=(5.0, 4.9))   # 示例尺寸；保留模板比例，按实际显示尺寸检查字号与布局
 # (1) 残差 vs 拟合值
 ax = axes[0, 0]
 ax.scatter(y_pred, std_resid, s=15, alpha=0.5, color=PALETTE[0], edgecolor='white', linewidth=0.3)

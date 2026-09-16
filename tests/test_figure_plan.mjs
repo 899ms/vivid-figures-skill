@@ -30,3 +30,8 @@ test('existing data count and roadmap requirements remain',()=>{
   assert.ok(errors.some(e=>e.includes('at least 8')));
   assert.ok(errors.some(e=>e.includes('roadmap')));
 });
+test('consistent comparisons do not require arbitrary chart type variety',()=>{
+  const p=plan();p.questions[0].modelCount=4;
+  for(const f of p.figures) if(f.class==='DATA') f.chartType='paired forest';
+  assert.deepEqual(figurePlanErrors(p),[]);
+});

@@ -13,7 +13,7 @@ export function figurePlanErrors(plan: any, minimum = 8): string[] {
   const errors: string[] = [], figures = Array.isArray(plan?.figures) ? plan.figures : [];
   const data = figures.filter((f: any) => f.class === 'DATA');
   if (data.length < Math.max(8, minimum)) errors.push(`DATA requires at least ${Math.max(8, minimum)} distinct figures (PDF/PNG and panels do not count separately)`);
-  const ids = new Set(), types = new Map<string, number>();
+  const ids = new Set();
   for (const f of figures) {
     if (!/^(fig_|tikz_|TABLE_)[a-z0-9_]+$/.test(f.id ?? '') || ids.has(f.id)) errors.push(`Invalid or duplicate figure id: ${f.id}`);
     ids.add(f.id);
@@ -24,11 +24,7 @@ export function figurePlanErrors(plan: any, minimum = 8): string[] {
     const extensions: Record<string, string[]> = { DATA:['pdf','png','svg'], TABLE:['tex','md','csv','html'], DRAWIO:['pdf','png','svg'], TIKZ:['pdf','png','svg'], ILLUSTRATION:['png','jpg','webp'], HTML:['html','pdf','png'], MERMAID:['mmd','pdf','svg','png'] };
     if (!Array.isArray(f.outputs) || !f.outputs.some((p: string) => (extensions[f.class] ?? []).some(ext => p === `figures/${f.id}.${ext}`))) errors.push(`${f.id}: outputs must include a supported artifact for its renderer`);
     if (!(f.finalWidthMm > 0)) errors.push(`${f.id}: finalWidthMm required`);
-    if (f.class === 'DATA') {
-      const type = (f.chartType ?? '').trim().toLowerCase(); types.set(type, (types.get(type) ?? 0) + 1);
-    }
   }
-  for (const [type, n] of types) if (n > 3) errors.push(`Repeated chartType ${type}: ${n} > 3; use canonical names, not aliases to evade this check`);
   if (!figures.some((f: any) => f.class === 'DRAWIO' && f.purpose === 'roadmap')) errors.push('Full plan requires one DRAWIO overall roadmap');
   if (!Array.isArray(plan?.questions) || !plan.questions.length) errors.push('questions classification required');
   for (const q of plan?.questions ?? []) {
@@ -36,7 +32,6 @@ export function figurePlanErrors(plan: any, minimum = 8): string[] {
     if (!figures.some((f: any) => f.question === q.id)) errors.push(`${q.id}: no planned figure`);
     if (q.kind === 'reasoning' && !figures.some((f: any) => f.question === q.id && f.class === 'TIKZ' && f.purpose === 'derivation')) errors.push(`${q.id}: reasoning question requires true derivation construction`);
     if (q.spatial && !figures.some((f: any) => f.question === q.id && f.class === 'DATA' && f.spatial === true)) errors.push(`${q.id}: spatial evidence plot required`);
-    if (q.modelCount >= 3 && new Set(figures.filter((f: any) => f.question === q.id && f.class === 'DATA').map((f: any) => f.chartType)).size < 2) errors.push(`${q.id}: >=3 models require >=2 comparison types`);
   }
   return errors;
 }

@@ -23,7 +23,7 @@
 <span id="L23"><a href="#L23">  23</a>                 [91.0, 93.2, 94.2, 93.8, 90.5]),</span>
 <span id="L24"><a href="#L24">  24</a> }</span>
 <span id="L25"><a href="#L25">  25</a> </span>
-<span id="L26"><a href="#L26">  26</a> fig, axes = plt.subplots(2, 2, figsize=(5.0, 4.9))   # ⛔ 2×2 是近方图，上页只显示 4.55in → 原生 5.0in（写 10 会缩到 0.46）</span>
+<span id="L26"><a href="#L26">  26</a> fig, axes = plt.subplots(2, 2, figsize=(5.0, 4.9))   # 示例尺寸；保留模板比例，按实际显示尺寸检查字号与布局</span>
 <span id="L27"><a href="#L27">  27</a> for idx, (name, (x_vals, y_mean, y_min, y_max)) in enumerate(params.items()):</span>
 <span id="L28"><a href="#L28">  28</a>     ax = axes.flat[idx]</span>
 <span id="L29"><a href="#L29">  29</a>     x_pos = range(len(x_vals))</span>

@@ -15,7 +15,7 @@ y_pred = y_true + np.random.normal(0, 5, n)
 residuals = y_pred - y_true
 std_resid = (residuals - residuals.mean()) / residuals.std()
 
-fig, axes = plt.subplots(2, 2, figsize=(5.0, 4.9))   # ⛔ 2×2 是近方图，上页只显示 4.55in → 原生 5.0in（写 10 会缩到 0.46）
+fig, axes = plt.subplots(2, 2, figsize=(5.0, 4.9))   # 示例尺寸；保留模板比例，按实际显示尺寸检查字号与布局
 # (1) 残差 vs 拟合值
 ax = axes[0, 0]
 ax.scatter(y_pred, std_resid, s=15, alpha=0.5, color=PALETTE[0], edgecolor='white', linewidth=0.3)

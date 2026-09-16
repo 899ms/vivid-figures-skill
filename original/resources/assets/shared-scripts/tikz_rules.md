@@ -21,7 +21,7 @@ TikZ 擅长：流程图、技术路线图、变量关系图、算法流程图（
 
 ## 布局模板参考（不强制，选最合适的或自创）
 
-`figure_style_guide.md` 中提供了多种布局模板作为参考。
+`tikz_layout_templates.md` 中提供了多种布局模板作为参考。
 `tikz_examples_extra.tex` 中提供了 15 个参考模板（A-O）：
 - 架构类：A 神经网络(MLP)、H CNN卷积层堆叠、I Transformer模块化架构、L PINNs物理信息网络
 - 评价/状态类：B 蛛网/雷达图、C 状态自动机
@@ -359,7 +359,7 @@ bigarrow/.style={-stealth, line width=1.4pt, color=green!70!black},
 - 阶段数量 4-6 个，每阶段子节点不超过 5 个
 
 ### 布局技巧
-- 虚线框坐标按公式计算（见 `figure_style_guide.md` 的虚线框坐标计算规则）
+- 虚线框坐标按公式计算（见 `tikz_layout_templates.md` 的虚线框坐标计算规则）
 - 子节点超过 4 个建议分两行，间距至少 1.2cm
 - 侧边标注超过 6 个字符时，用 `text width` + `align=left` 自动换行
 - 虚线框标签放在框的左上角外侧，字号用 `\scriptsize`

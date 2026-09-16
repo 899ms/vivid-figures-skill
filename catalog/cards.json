@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "140 recipes (108 existing + 32 screenshot restorations) plus one complete template",
+  "scope": "143 recipes plus 3 complete composition templates (SEM and two SHAP compositions)",
   "cards": [
     {
       "id": "basic.grouped_bar",
@@ -1409,9 +1409,9 @@
         "execution_code": "sources/basic.multipanel/render.py",
         "recipe_section": "sources/basic.multipanel/recipe.md",
         "recipe_file": "figure_recipes_basic.md",
-        "content_sha256": "5a0a110783982db9bd922bfa8cfdccc940879446818431dcd44e13f3be90f4a0",
-        "code_sha256": "63f8cfcd25eb3b99b7f21617331f8e62202699a9e1f5aae0b5a8ecacdb3a01c9",
-        "execution_sha256": "63f8cfcd25eb3b99b7f21617331f8e62202699a9e1f5aae0b5a8ecacdb3a01c9",
+        "content_sha256": "8ef93b1f5debf3b14fb81395cbb353d127f3ad19edf0f1ad23b7f7d0738c2a94",
+        "code_sha256": "e60a5cad9d4cd5106c6067eee66913276fa45af1b5998ac31ed9e82640577faa",
+        "execution_sha256": "e60a5cad9d4cd5106c6067eee66913276fa45af1b5998ac31ed9e82640577faa",
         "code_view": "sources/basic.multipanel/original.html"
       },
       "title_mismatch": false,
@@ -3338,7 +3338,7 @@
         "execution_code": "sources/advanced.cluster_heatmap/render.py",
         "recipe_section": "sources/advanced.cluster_heatmap/recipe.md",
         "recipe_file": "figure_recipes_advanced.md",
-        "content_sha256": "f8ab29bda751be36810ae7363f6497d59485f488c67c00168ac1c6e144c7ada9",
+        "content_sha256": "cedf679717abe4595e60ff8bf4fa57ace9d7aaf628131c9b77501fda4cda3476",
         "code_sha256": "afaf99e2d36a5fb6190bc2dad26cbd9fbed7ee1693f732011e7be9b54d04f17b",
         "execution_sha256": "afaf99e2d36a5fb6190bc2dad26cbd9fbed7ee1693f732011e7be9b54d04f17b",
         "code_view": "sources/advanced.cluster_heatmap/original.html",
@@ -7110,9 +7110,9 @@
         "execution_code": "sources/empirical.residual_diagnostics/render.py",
         "recipe_section": "sources/empirical.residual_diagnostics/recipe.md",
         "recipe_file": "figure_recipes_empirical.md",
-        "content_sha256": "a1c29d9c2fea6ddcf227c2c44ef6b846b5e61de322705b117aa71867a736df35",
-        "code_sha256": "a5fbfffad7589c6ee9ac78b3091c6a30f10c085cb1021996a00292091605f4b7",
-        "execution_sha256": "a5fbfffad7589c6ee9ac78b3091c6a30f10c085cb1021996a00292091605f4b7",
+        "content_sha256": "f04c0dcd7250c2087b65aa6be20b5ddbc331d50a24d947112ed633f78fc1c92b",
+        "code_sha256": "a9ee73493673b35c19c762622b7b13bc2f29823bdd68ed1d411d7d4ba342c168",
+        "execution_sha256": "a9ee73493673b35c19c762622b7b13bc2f29823bdd68ed1d411d7d4ba342c168",
         "code_view": "sources/empirical.residual_diagnostics/original.html"
       },
       "title_mismatch": false,
@@ -7880,7 +7880,7 @@
       "purpose": "预测跟踪真实走势怎样，误差分布如何？",
       "data_requirements": [
         "有序真实值、预测值、预测区间",
-        "训练测试分界"
+        "可选：真实训练测试分界或已定义评估方案"
       ],
       "composition": "左时序实际与预测；右竖向误差直方与密度",
       "visual_features": [
@@ -7888,7 +7888,7 @@
         "训练测试背景",
         "误差指标框"
       ],
-      "adaptation_notes": "右侧是残差分布，非左图数值边际；训练测试划分及区间必须对应实际结果。",
+      "adaptation_notes": "右侧是残差分布，必须独立于左侧预测量的纵轴范围和刻度，不能使用sharey连接两者。训练测试划分为条件构件：没有真实标签或既定评估方案时不绘制，不自行补比例；多方法分别计算并标明指标及有效样本数，不将方法重复观测混算为一个评价值。",
       "number": 59,
       "kind": "recipe",
       "legacy_title": "Prediction vs Actual with CI Band",
@@ -7973,8 +7973,8 @@
       "fidelity_checkpoints": [
         {
           "feature": "预测带与侧边误差分布",
-          "preserve": "保留主图透明预测带、真实/预测线型区分、训练测试分界，以及右侧竖向误差直方和密度。",
-          "allowed_adaptation": "训练边界、预测区间、误差样本和评价指标重算；侧分布共用误差值轴，不能误当预测轴边际。",
+          "preserve": "保留主图逐层叠加的透明预测带（本示例为12层alpha=0.025）、实际/预测线型区分，以及右侧竖向误差直方和密度；不能把分层带直接替换成一次实色填充。",
+          "allowed_adaptation": "真实区间端点决定色带外边界，内层仅表示视觉渐变，不宣称额外置信水平。仅有真实训练/测试标签或已定义的评估方案时保留分界；没有时移除这组背景、分界和训练/测试文字，不自行发明70/30或80/20划分。指标使用明确的真实样本范围，多方法分别计算并标明n、MAE和RMSE；不得把多个方法的同一批观测合并冒充独立样本。多站点可复用主图＋误差侧栏并留足轴标签间距；残差纵轴和预测量纵轴独立设置，保留各自可读的数值刻度与单位。",
           "evidence": [
             {
               "line": 19,
@@ -9799,9 +9799,9 @@
         "execution_code": "sources/academic.hyperparameter_sensitivity/render.py",
         "recipe_section": "sources/academic.hyperparameter_sensitivity/recipe.md",
         "recipe_file": "figure_recipes_academic.md",
-        "content_sha256": "6216d922bcc024d4c1dcb252c978178c90da4ae8283643163d648b4603488b93",
-        "code_sha256": "21b607229170a1c287e3dde3343101486bc04b203aa7614daea71fa827206ae7",
-        "execution_sha256": "21b607229170a1c287e3dde3343101486bc04b203aa7614daea71fa827206ae7",
+        "content_sha256": "f14b885ba96a68173e2d41bc0c19982a09ffb401e2d714f652f40531e7d7b462",
+        "code_sha256": "19d9d399387ea91cfeaf485818d75e268689f1319a7f8e7caadac28d28fa6be9",
+        "execution_sha256": "19d9d399387ea91cfeaf485818d75e268689f1319a7f8e7caadac28d28fa6be9",
         "code_view": "sources/academic.hyperparameter_sensitivity/original.html"
       },
       "title_mismatch": false,
@@ -11180,8 +11180,8 @@
       "fidelity_checkpoints": [
         {
           "feature": "前沿与代表解的视觉层次",
-          "preserve": "保留前沿粗线、区域浅填充、极端解与折中星号及方向箭头，区分区域与前沿。",
-          "allowed_adaptation": "目标方向、实际前沿、折中判据和区域边界重算，不能照搬示例曲线宣称可行。",
+          "preserve": "保留前沿粗线、极端解与折中星号、短引线注释及方向箭头；区域浅填充仅在区域含义有数据或模型依据时保留。",
+          "allowed_adaptation": "目标方向、实际前沿和折中判据按真实结果计算。离散候选只证明观测点的非支配关系；不能将平滑或直线插值的一侧声称为可行域。若展示离散最小化点集的支配区域，应按实际点构成的阶梯边界绘制；不需区域时省略对应填充与标签，保留前沿和代表解。",
           "evidence": [
             {
               "line": 14,
@@ -11822,9 +11822,9 @@
         "execution_code": "sources/competition.residual_diagnostics/render.py",
         "recipe_section": "sources/competition.residual_diagnostics/recipe.md",
         "recipe_file": "figure_recipes_competition.md",
-        "content_sha256": "f67d365c6ea93408e853fdb8f868f0adfe7347feb7e8d92953468ab49ffc3831",
-        "code_sha256": "314ddf93f329c44f836ee1a9ede610181a6295d970f9218213f1c091dcd6563c",
-        "execution_sha256": "314ddf93f329c44f836ee1a9ede610181a6295d970f9218213f1c091dcd6563c",
+        "content_sha256": "4862ceb77b02016a80cef28e3fea0bb180c5028f17114fbef3225831d3284eb6",
+        "code_sha256": "03fbe96bd214f6f339e09dd71f8e7d7edc277345162b8ba0fb2fde860b7893e7",
+        "execution_sha256": "03fbe96bd214f6f339e09dd71f8e7d7edc277345162b8ba0fb2fde860b7893e7",
         "code_view": "sources/competition.residual_diagnostics/original.html"
       },
       "title_mismatch": false,
@@ -18222,6 +18222,712 @@
         }
       ],
       "fidelity_scope": "恢复适配版的可见视觉层；来源缺口见SOURCE.md"
+    },
+    {
+      "id": "advanced.grouped_bar_3d",
+      "display_name": "三维分组渐变柱状图",
+      "tags": [
+        "三维",
+        "柱状",
+        "比较",
+        "误差"
+      ],
+      "purpose": "不同样品在多个实验条件下的测量值及不确定性如何变化？",
+      "data_requirements": [
+        "行类别×列条件的非负有限数值矩阵",
+        "两轴标签；可选真实对称/非对称误差长度"
+      ],
+      "composition": "单三维轴；二维排列渐变柱、逐柱标签与误差棒；侧边分段色条",
+      "visual_features": [
+        "白到主题色的分层渐变柱面",
+        "顶面与侧面明暗",
+        "柱顶数值标签",
+        "可选误差棒",
+        "数值分档色条",
+        "正交视角和虚线网格"
+      ],
+      "adaptation_notes": "按用户参考图的既有复现源码适配。示例柱高为标签转录值，误差为示意并已标注；自定义数据不自动补误差。支持非负有限矩阵；三维遮挡较多时需控制组数。分档阈值可不等宽，色条等高块代表档位。",
+      "number": 142,
+      "kind": "recipe",
+      "legacy_title": "三维分组渐变柱状图",
+      "legacy_ref": "advanced #35",
+      "source": {
+        "original_code": "sources/advanced.grouped_bar_3d/original.py",
+        "execution_code": "sources/advanced.grouped_bar_3d/original.py",
+        "recipe_section": "sources/advanced.grouped_bar_3d/recipe.md",
+        "recipe_file": "figure_recipes_advanced.md",
+        "content_sha256": "9a54c13b2e3fc68616e20a682374beac04b9eac39b8decbaa46be9345068e5b8",
+        "code_sha256": "58014f254f4bcddcb4bb6cd5b0c8ec0482667345aa0509e77f76c7c9fc95ec14",
+        "execution_sha256": "58014f254f4bcddcb4bb6cd5b0c8ec0482667345aa0509e77f76c7c9fc95ec14",
+        "code_view": "sources/advanced.grouped_bar_3d/original.html",
+        "provenance": "sources/advanced.grouped_bar_3d/provenance.json"
+      },
+      "title_mismatch": false,
+      "compatibility_patches": [
+        "项目配色与可复用矩阵接口；动态坐标、显式误差及数据校验"
+      ],
+      "preview_scope": "complete_reference_adapted_demo",
+      "previews": [
+        {
+          "path": "previews/advanced.grouped_bar_3d-1.png",
+          "thumbnail": "thumbnails/advanced.grouped_bar_3d-1.jpg",
+          "sha256": "9baf51c64e8ff323d22382487bd8d5076bf8b80528bbc29c21a6a34d57ca66e9",
+          "pixels": [
+            4183,
+            3758
+          ],
+          "palette_id": "olive-apricot"
+        }
+      ],
+      "code_evidence": [
+        {
+          "line": 115,
+          "operation": "Poly3DCollection",
+          "code": "Poly3DCollection(faces, facecolors=facecolors, edgecolors='none',\n                                        linewidths=0, antialiased=False, zsort='average', zorder=3)"
+        },
+        {
+          "line": 123,
+          "operation": "plot",
+          "code": "ax.plot([i,i], [j,j], [h-lower[i,j],h+err], c='black', lw=1.25, zorder=5)"
+        },
+        {
+          "line": 125,
+          "operation": "text",
+          "code": "ax.text(i, j, h+err+label_offset, f'{h:.2f}', ha='center', va='bottom',\n                    fontsize=10, zorder=6, bbox=dict(facecolor='white', edgecolor='none', alpha=.87, pad=.15))"
+        }
+      ],
+      "literal_colormaps": [],
+      "aliases": [
+        "3d grouped bar",
+        "gradient bar",
+        "三维误差棒柱状图",
+        "材料掺量对比",
+        "样品条件矩阵"
+      ],
+      "related_ids": [
+        "basic.grouped_bar",
+        "screenshot.block_surface_3d"
+      ],
+      "review": {
+        "visual": "main_preview_inspected",
+        "code": "drawing_layers_and_input_contract_checked",
+        "statistical_audit": false
+      },
+      "card_path": "cards/advanced.grouped_bar_3d.md",
+      "fidelity_checkpoints": [
+        {
+          "feature": "三维梯度柱面与数值分档",
+          "preserve": "保留四面渐变分层、独立顶面明暗、正交视角、逐柱数值、真实数据支持的误差棒与分段色条；柱体和色条必须共用同一分档及颜色映射。",
+          "allowed_adaptation": "可改行列数、数据、真实误差、标签、视角与分档阈值；换色保留白到主题色的柱面渐变，不把分类取色顺序当数值色阶。无真实误差时省略该层。",
+          "evidence": [
+            {
+              "line": 115,
+              "end_line": 116,
+              "code": "    ax.add_collection3d(Poly3DCollection(faces, facecolors=facecolors, edgecolors='none',\n                                        linewidths=0, antialiased=False, zsort='average', zorder=3))",
+              "href": "sources/advanced.grouped_bar_3d/original.html#L115"
+            },
+            {
+              "line": 123,
+              "end_line": 123,
+              "code": "                ax.plot([i,i], [j,j], [h-lower[i,j],h+err], c='black', lw=1.25, zorder=5)",
+              "href": "sources/advanced.grouped_bar_3d/original.html#L123"
+            },
+            {
+              "line": 125,
+              "end_line": 126,
+              "code": "            ax.text(i, j, h+err+label_offset, f'{h:.2f}', ha='center', va='bottom',\n                    fontsize=10, zorder=6, bbox=dict(facecolor='white', edgecolor='none', alpha=.87, pad=.15))",
+              "href": "sources/advanced.grouped_bar_3d/original.html#L125"
+            },
+            {
+              "line": 106,
+              "end_line": 106,
+              "code": "                c = base if h <= 1.5 else np.ones(3)*(1-t**.65)+base*t**.65",
+              "href": "sources/advanced.grouped_bar_3d/original.html#L106"
+            },
+            {
+              "line": 142,
+              "end_line": 142,
+              "code": "    cb = ColorbarBase(cax, cmap=cmap, norm=norm, boundaries=bounds, ticks=bounds, spacing='uniform')",
+              "href": "sources/advanced.grouped_bar_3d/original.html#L142"
+            },
+            {
+              "line": 82,
+              "end_line": 82,
+              "code": "    scale = LinearSegmentedColormap.from_list('vivid_ordered', palette_colors())",
+              "href": "sources/advanced.grouped_bar_3d/original.html#L82"
+            }
+          ]
+        }
+      ],
+      "fidelity_scope": "基于用户参考图复现版的完整视觉结构；误差数据来源须独立确认。"
+    },
+    {
+      "id": "advanced.multi_y_gradient_hist",
+      "display_name": "多Y轴渐变直方图与正态拟合",
+      "tags": [
+        "分布",
+        "比较",
+        "多轴",
+        "渐变"
+      ],
+      "purpose": "多个群体在同一测量变量上的中心、离散程度和分布形状有何区别？",
+      "data_requirements": [
+        "1–3组同单位原始观测及组名",
+        "每组至少两个等宽箱，可采用错位分箱；可选正态拟合"
+      ],
+      "composition": "单面板重叠渐变直方图；共享X轴、同色独立Y轴与正态拟合虚线",
+      "visual_features": [
+        "透明到原色的柱体渐变",
+        "组间错位等宽分箱",
+        "三组重叠直方图",
+        "左1右2同色独立Y轴",
+        "正态拟合虚线",
+        "样本量与拟合参数图例"
+      ],
+      "adaptation_notes": "仅效果图重建，未提供原代码或样本；预览为固定种子模拟数据。独立Y轴只能按对应颜色刻度读数，不能直接跨组比柱高；正态拟合可关闭，不代表正态性通过。",
+      "number": 143,
+      "kind": "recipe",
+      "legacy_title": "多Y轴渐变直方图与正态拟合",
+      "legacy_ref": "advanced #36",
+      "source": {
+        "original_code": "sources/advanced.multi_y_gradient_hist/original.py",
+        "execution_code": "sources/advanced.multi_y_gradient_hist/original.py",
+        "recipe_section": "sources/advanced.multi_y_gradient_hist/recipe.md",
+        "recipe_file": "figure_recipes_advanced.md",
+        "content_sha256": "8cbe4dffa748268feb5876bc7bb60d69653b6dabd542871b835606b1b4c4c1fa",
+        "code_sha256": "df18fabca541884c2e16957f8fbe961deb48b421b09257d0f9e664f3b4779f41",
+        "execution_sha256": "df18fabca541884c2e16957f8fbe961deb48b421b09257d0f9e664f3b4779f41",
+        "code_view": "sources/advanced.multi_y_gradient_hist/original.html",
+        "provenance": "sources/advanced.multi_y_gradient_hist/provenance.json"
+      },
+      "title_mismatch": false,
+      "compatibility_patches": [
+        "仅图重建；样本为模拟数据；组间错位等宽分箱及频数单位拟合"
+      ],
+      "preview_scope": "complete_synthetic_reconstruction",
+      "previews": [
+        {
+          "path": "previews/advanced.multi_y_gradient_hist-1.png",
+          "thumbnail": "thumbnails/advanced.multi_y_gradient_hist-1.jpg",
+          "sha256": "f7eb987ae7151616c6059ea9017b0e4f3d7b32b4f0cf0c256b690d07955ad777",
+          "pixels": [
+            2787,
+            2179
+          ],
+          "palette_id": "olive-apricot"
+        }
+      ],
+      "code_evidence": [
+        {
+          "line": 154,
+          "operation": "PolyCollection",
+          "code": "PolyCollection(vertices, facecolors=facecolors,\n                            edgecolors='none', antialiased=False,\n                            transform=ax.transData, zorder=2+({0:.1,1:0.,2:.2}[i]))"
+        },
+        {
+          "line": 160,
+          "operation": "plot",
+          "code": "host.plot(xfit, yfit, color=color, ls='--', lw=2.2,\n                      transform=ax.transData, zorder=5)"
+        }
+      ],
+      "literal_colormaps": [],
+      "aliases": [
+        "multi y histogram",
+        "多y轴渐变图",
+        "三y轴直方图",
+        "残差分布拟合",
+        "多组渐变直方图"
+      ],
+      "related_ids": [
+        "advanced.multi_y_gradient_hist"
+      ],
+      "review": {
+        "visual": "main_preview_inspected",
+        "code": "counts_normal_fit_scaling_and_axis_transforms_checked",
+        "statistical_audit": false
+      },
+      "card_path": "cards/advanced.multi_y_gradient_hist.md",
+      "fidelity_checkpoints": [
+        {
+          "feature": "多轴透明柱与频数拟合",
+          "preserve": "保留柱体真实透明渐变、叠加关系、共享横轴与独立同色Y轴、图例和虚线拟合；每组图层绑定自身Y轴变换，拟合按该组N×该组箱宽换算到频数。",
+          "allowed_adaptation": "可以更换样本、分箱数、配色、标签和不截断的刻度范围；缺少正态假设或零方差时关闭拟合。不能把渐变改成纯色，不能用独立轴柱高声称频数更大。",
+          "evidence": [
+            {
+              "line": 154,
+              "end_line": 156,
+              "code": "        host.add_collection(PolyCollection(vertices, facecolors=facecolors,\n                            edgecolors='none', antialiased=False,\n                            transform=ax.transData, zorder=2+({0:.1,1:0.,2:.2}[i])), autolim=False)",
+              "href": "sources/advanced.multi_y_gradient_hist/original.html#L154"
+            },
+            {
+              "line": 160,
+              "end_line": 161,
+              "code": "            host.plot(xfit, yfit, color=color, ls='--', lw=2.2,\n                      transform=ax.transData, zorder=5)",
+              "href": "sources/advanced.multi_y_gradient_hist/original.html#L160"
+            },
+            {
+              "line": 153,
+              "end_line": 153,
+              "code": "                facecolors.append((*rgb, .02+.76*((k+.5)/64)**.85))",
+              "href": "sources/advanced.multi_y_gradient_hist/original.html#L153"
+            },
+            {
+              "line": 118,
+              "end_line": 118,
+              "code": "        yfit = (len(values)*widths[0]/(sigma*np.sqrt(2*np.pi))",
+              "href": "sources/advanced.multi_y_gradient_hist/original.html#L118"
+            },
+            {
+              "line": 130,
+              "end_line": 130,
+              "code": "            ax.spines['right'].set_position(('axes', 1.+.12*(i-1)))",
+              "href": "sources/advanced.multi_y_gradient_hist/original.html#L130"
+            },
+            {
+              "line": 140,
+              "end_line": 140,
+              "code": "        ax.set_ylabel('Frequency' if i == 0 else '', color='black', fontsize=15, labelpad=6)",
+              "href": "sources/advanced.multi_y_gradient_hist/original.html#L140"
+            }
+          ]
+        }
+      ],
+      "fidelity_scope": "效果图重建版的主要视觉层，不是原研究数据复现。"
+    },
+    {
+      "id": "advanced.relief_correlation_heatmap",
+      "number": 144,
+      "kind": "recipe",
+      "display_name": "立体方块相关性热图",
+      "tags": [
+        "三维",
+        "矩阵",
+        "相关",
+        "浮雕"
+      ],
+      "purpose": "多变量之间有哪些正负相关结构与关联强弱差异？",
+      "data_requirements": [
+        "完整观测数值表，或有效对称Pearson相关矩阵",
+        "2–40个变量及唯一行列标签"
+      ],
+      "composition": "完整矩阵的斜投影浮雕方块；方形正面、双侧壁、行列标签与侧边色条",
+      "visual_features": [
+        "正方形矩阵正面",
+        "错落浮雕高度",
+        "双侧阴影与细棱线",
+        "矩阵行列标签",
+        "有符号相关性色条"
+      ],
+      "adaptation_notes": "仅效果图重建；演示相关矩阵来自模拟样本。颜色表示Pearson r，高度按r线性增加，这是明确约定而非原图已知规则；侧壁阴影不能代替正面读色。",
+      "legacy_title": "立体方块相关性热图",
+      "legacy_ref": "advanced #37",
+      "source": {
+        "original_code": "sources/advanced.relief_correlation_heatmap/original.py",
+        "execution_code": "sources/advanced.relief_correlation_heatmap/original.py",
+        "recipe_section": "sources/advanced.relief_correlation_heatmap/recipe.md",
+        "recipe_file": "figure_recipes_advanced.md",
+        "content_sha256": "4a4679b41e59c71bfbad6ba47178cdccf3d9cf0770a034b14fdf4bfc562f52eb",
+        "code_sha256": "f72ce056053fd614be7a331b3c818068ac265789a419ba6a20b1250bbe500e66",
+        "execution_sha256": "f72ce056053fd614be7a331b3c818068ac265789a419ba6a20b1250bbe500e66",
+        "code_view": "sources/advanced.relief_correlation_heatmap/original.html",
+        "provenance": "sources/advanced.relief_correlation_heatmap/provenance.json"
+      },
+      "title_mismatch": false,
+      "compatibility_patches": [
+        "仅效果图重建；声明高度规则；演示由模拟样本计算相关矩阵"
+      ],
+      "preview_scope": "complete_synthetic_reconstruction",
+      "previews": [
+        {
+          "path": "previews/advanced.relief_correlation_heatmap-1.png",
+          "thumbnail": "thumbnails/advanced.relief_correlation_heatmap-1.jpg",
+          "sha256": "abc6e4a665c20607c054dce80aff5cd31d13006edbfeedaa96682d416e6e1352",
+          "pixels": [
+            3098,
+            2863
+          ],
+          "palette_id": "olive-apricot"
+        }
+      ],
+      "code_evidence": [
+        {
+          "line": 90,
+          "operation": "Polygon",
+          "code": "Polygon(points,closed=True,facecolor=color,\n                                edgecolor='#273641',linewidth=.62,joinstyle='miter')"
+        },
+        {
+          "line": 92,
+          "operation": "add_patch",
+          "code": "ax.add_patch(polygon)"
+        },
+        {
+          "line": 105,
+          "operation": "colorbar",
+          "code": "fig.colorbar(ScalarMappable(norm=norm,cmap=cmap),cax=cax,\n                         ticks=[-1,-.5,0,.5,1])"
+        }
+      ],
+      "literal_colormaps": [],
+      "aliases": [
+        "3d correlation heatmap",
+        "3d热力图",
+        "立体相关矩阵",
+        "浮雕矩阵",
+        "方块热图"
+      ],
+      "related_ids": [
+        "competition.correlation_matrix",
+        "screenshot.block_surface_3d"
+      ],
+      "review": {
+        "visual": "main_preview_inspected",
+        "code": "correlation_validity_and_face_color_geometry_checked",
+        "statistical_audit": false
+      },
+      "card_path": "cards/advanced.relief_correlation_heatmap.md",
+      "fidelity_checkpoints": [
+        {
+          "feature": "相关矩阵的完整浮雕结构",
+          "preserve": "保留完整矩阵、固定斜投影的方形正面、双侧阴影、细棱线及后到前绘制顺序；正面色与色条严格共用[-1,1]映射，凸起按有符号r的声明公式计算。",
+          "allowed_adaptation": "可替换有效相关矩阵、标签、配色与凸起强度；颜色不受阴影或relief参数重新归一化。保留正负语义，不凭视觉推定缺失数据，不将方块平滑成连续曲面。",
+          "evidence": [
+            {
+              "line": 90,
+              "end_line": 91,
+              "code": "                polygon=Polygon(points,closed=True,facecolor=color,\n                                edgecolor='#273641',linewidth=.62,joinstyle='miter')",
+              "href": "sources/advanced.relief_correlation_heatmap/original.html#L90"
+            },
+            {
+              "line": 92,
+              "end_line": 92,
+              "code": "                ax.add_patch(polygon)",
+              "href": "sources/advanced.relief_correlation_heatmap/original.html#L92"
+            },
+            {
+              "line": 105,
+              "end_line": 106,
+              "code": "    colorbar=fig.colorbar(ScalarMappable(norm=norm,cmap=cmap),cax=cax,\n                         ticks=[-1,-.5,0,.5,1])",
+              "href": "sources/advanced.relief_correlation_heatmap/original.html#L105"
+            },
+            {
+              "line": 60,
+              "end_line": 60,
+              "code": "    height=relief*(.12+1.4*(float(r)+1)/2)",
+              "href": "sources/advanced.relief_correlation_heatmap/original.html#L60"
+            },
+            {
+              "line": 61,
+              "end_line": 61,
+              "code": "    face=base+height*np.array([.58,.98])",
+              "href": "sources/advanced.relief_correlation_heatmap/original.html#L61"
+            },
+            {
+              "line": 85,
+              "end_line": 85,
+              "code": "    for row in range(n):",
+              "href": "sources/advanced.relief_correlation_heatmap/original.html#L85"
+            }
+          ]
+        }
+      ],
+      "fidelity_scope": "效果图重建；颜色数据语义及模板自定义高度规则须保留。"
+    },
+    {
+      "id": "template.shap_dependence",
+      "number": 145,
+      "kind": "complete_template",
+      "display_name": "SHAP重要性蜂群与依赖图组合",
+      "tags": [
+        "解释",
+        "机器学习",
+        "分布",
+        "非线性",
+        "组合"
+      ],
+      "purpose": "哪些特征影响模型预测，它们的数值变化与SHAP归因有什么关系？",
+      "data_requirements": [
+        "同一模型输出、同一批样本的数值特征表与SHAP表",
+        "唯一sample_id和变量名；可选带方法说明的阈值"
+      ],
+      "composition": "左侧双横轴重要性柱与蜂群叠加；右侧两列SHAP依赖图；共享特征值色条",
+      "visual_features": [
+        "双横轴条形蜂群叠加",
+        "透明圆点",
+        "重要性一致排序",
+        "两列依赖面板",
+        "局部趋势、中位数和可选阈值"
+      ],
+      "adaptation_notes": "连续颜色在每个变量内部按min/max归一化，重要性为平均绝对SHAP。模型归因不是因果效应。可替换真实SHAP和特征、标签、top项数及面板数量；阈值须提供数值与来源，默认不推断转折点；性能指标不得照抄截图。",
+      "legacy_title": "SHAP重要性蜂群与依赖图组合",
+      "legacy_ref": null,
+      "title_mismatch": false,
+      "compatibility_patches": [
+        "效果图重建；合成模型演示"
+      ],
+      "preview_scope": "complete_synthetic_reconstruction",
+      "source": {
+        "original_code": "sources/shap-composites/original.py",
+        "execution_code": "../templates/shap-composites/plot_shap_composites.py",
+        "execution_args": [
+          "--mode",
+          "dependence"
+        ],
+        "template_description": "../templates/shap-composites/TEMPLATE.md",
+        "code_sha256": "4f34051e9ece8f89f352e876eb289f023a805be8b4e81aabb2ea24a03a0a735f",
+        "execution_sha256": "4f34051e9ece8f89f352e876eb289f023a805be8b4e81aabb2ea24a03a0a735f",
+        "code_view": "sources/shap-composites/original.html",
+        "provenance": "sources/template.shap_dependence/provenance.json"
+      },
+      "previews": [
+        {
+          "path": "previews/template.shap_dependence-1.png",
+          "thumbnail": "thumbnails/template.shap_dependence-1.jpg",
+          "sha256": "052a8c7931d8e4f8834e901134d93e311341bf2f5f418b875dc918ab6eec432a",
+          "pixels": [
+            2478,
+            1346
+          ],
+          "palette_id": "olive-apricot"
+        }
+      ],
+      "code_evidence": [
+        {
+          "line": 194,
+          "operation": "composition",
+          "code": "    bars = ax.twiny()"
+        },
+        {
+          "line": 198,
+          "operation": "composition",
+          "code": "    bars.barh(np.arange(len(order)),imp[order],height=.63,color=barcolors,"
+        },
+        {
+          "line": 206,
+          "operation": "composition",
+          "code": "        ax.scatter(shap[:,j],row+swarm_offsets(shap[:,j]),c=normalize_feature(x[:,j]),"
+        },
+        {
+          "line": 216,
+          "operation": "composition",
+          "code": "    grid = fig.add_gridspec(rows,2,left=.51,right=.93,bottom=.13,top=.88,wspace=.34,hspace=.64)"
+        },
+        {
+          "line": 220,
+          "operation": "composition",
+          "code": "        a.scatter(x[:,j],shap[:,j],c=normalize_feature(x[:,j]),cmap=cmap,vmin=0,vmax=1,"
+        },
+        {
+          "line": 232,
+          "operation": "composition",
+          "code": "            a.axvline(value,color=colors[0],ls=':',lw=1.1)"
+        }
+      ],
+      "literal_colormaps": [],
+      "aliases": [
+        "SHAP组合",
+        "重要性蜂群叠加",
+        "SHAP dependence",
+        "影响因素",
+        "特征响应"
+      ],
+      "related_ids": [
+        "advanced.shap_summary",
+        "template.shap_contribution"
+      ],
+      "review": {
+        "visual": "main_preview_inspected",
+        "code": "sample_alignment_and_attribution_arithmetic_checked",
+        "statistical_audit": false
+      },
+      "card_path": "cards/template.shap_dependence.md",
+      "fidelity_checkpoints": [
+        {
+          "feature": "左侧双横轴重要性柱与蜂群叠加；右侧两列SHAP依赖图；共享特征值色条",
+          "preserve": "保留顶部重要性轴与底部有符号SHAP轴、同一变量行的柱/蜂群叠加、右侧两列依赖图及共享连续色条；散点横坐标不抖动，透明层与趋势线分明。",
+          "allowed_adaptation": "可替换真实SHAP和特征、标签、top项数及面板数量；阈值须提供数值与来源，默认不推断转折点；性能指标不得照抄截图。",
+          "evidence": [
+            {
+              "line": 194,
+              "end_line": 194,
+              "code": "    bars = ax.twiny()",
+              "href": "sources/shap-composites/original.html#L194"
+            },
+            {
+              "line": 198,
+              "end_line": 198,
+              "code": "    bars.barh(np.arange(len(order)),imp[order],height=.63,color=barcolors,",
+              "href": "sources/shap-composites/original.html#L198"
+            },
+            {
+              "line": 206,
+              "end_line": 206,
+              "code": "        ax.scatter(shap[:,j],row+swarm_offsets(shap[:,j]),c=normalize_feature(x[:,j]),",
+              "href": "sources/shap-composites/original.html#L206"
+            },
+            {
+              "line": 216,
+              "end_line": 216,
+              "code": "    grid = fig.add_gridspec(rows,2,left=.51,right=.93,bottom=.13,top=.88,wspace=.34,hspace=.64)",
+              "href": "sources/shap-composites/original.html#L216"
+            },
+            {
+              "line": 220,
+              "end_line": 220,
+              "code": "        a.scatter(x[:,j],shap[:,j],c=normalize_feature(x[:,j]),cmap=cmap,vmin=0,vmax=1,",
+              "href": "sources/shap-composites/original.html#L220"
+            },
+            {
+              "line": 232,
+              "end_line": 232,
+              "code": "            a.axvline(value,color=colors[0],ls=':',lw=1.1)",
+              "href": "sources/shap-composites/original.html#L232"
+            }
+          ]
+        }
+      ],
+      "fidelity_scope": "主要截图结构重建；适配后核对实图。"
+    },
+    {
+      "id": "template.shap_contribution",
+      "number": 146,
+      "kind": "complete_template",
+      "display_name": "SHAP排名双层贡献环与蜂群组合",
+      "tags": [
+        "解释",
+        "机器学习",
+        "组成",
+        "排序",
+        "组合"
+      ],
+      "purpose": "单个变量及其所属类别的模型归因贡献分别有多大，影响方向如何分布？",
+      "data_requirements": [
+        "按sample_id和变量名对应的特征表与SHAP表",
+        "覆盖全部变量的2–6组分类映射"
+      ],
+      "composition": "左侧重要性排名及百分比；空白处嵌双层变量/类别贡献环；右侧同序方形蜂群和连续色条",
+      "visual_features": [
+        "条形末端数值和全变量占比",
+        "组内色阶",
+        "内变量外类别双环",
+        "嵌入左侧空白区",
+        "与排名逐行对齐的方形蜂群"
+      ],
+      "adaptation_notes": "连续颜色在每个变量内部按min/max归一化，重要性为平均绝对SHAP。模型归因不是因果效应。变量分组必须有实际含义；占比分母和环图均覆盖全部输入变量，top筛选不改变归一化。组贡献采用各变量mean(abs(SHAP))之和，不与有符号组归因混淆。",
+      "legacy_title": "SHAP排名双层贡献环与蜂群组合",
+      "legacy_ref": null,
+      "title_mismatch": false,
+      "compatibility_patches": [
+        "效果图重建；合成模型演示"
+      ],
+      "preview_scope": "complete_synthetic_reconstruction",
+      "source": {
+        "original_code": "sources/shap-composites/original.py",
+        "execution_code": "../templates/shap-composites/plot_shap_composites.py",
+        "execution_args": [
+          "--mode",
+          "contribution"
+        ],
+        "template_description": "../templates/shap-composites/TEMPLATE.md",
+        "code_sha256": "4f34051e9ece8f89f352e876eb289f023a805be8b4e81aabb2ea24a03a0a735f",
+        "execution_sha256": "4f34051e9ece8f89f352e876eb289f023a805be8b4e81aabb2ea24a03a0a735f",
+        "code_view": "sources/shap-composites/original.html",
+        "provenance": "sources/template.shap_contribution/provenance.json"
+      },
+      "previews": [
+        {
+          "path": "previews/template.shap_contribution-1.png",
+          "thumbnail": "thumbnails/template.shap_contribution-1.jpg",
+          "sha256": "f71d0636016cd9aab745278e26809359dc6a0dbdc7f97136812219d64a061a41",
+          "pixels": [
+            2478,
+            1274
+          ],
+          "palette_id": "olive-apricot"
+        }
+      ],
+      "code_evidence": [
+        {
+          "line": 272,
+          "operation": "composition",
+          "code": "    ax.barh(range(len(order)),importance[order],color=[feature_colors[j] for j in order],"
+        },
+        {
+          "line": 300,
+          "operation": "composition",
+          "code": "    ring.pie(outer,radius=1,startangle=90,counterclock=False,"
+        },
+        {
+          "line": 304,
+          "operation": "composition",
+          "code": "    ring.pie(importance[inner],radius=.70,startangle=90,counterclock=False,"
+        },
+        {
+          "line": 321,
+          "operation": "composition",
+          "code": "        ax2.scatter(shap[:,j],row+swarm_offsets(shap[:,j],max_width=.25),"
+        },
+        {
+          "line": 325,
+          "operation": "composition",
+          "code": "    ax2.set_ylim(ax.get_ylim()); ax2.set_yticks([])"
+        }
+      ],
+      "literal_colormaps": [],
+      "aliases": [
+        "SHAP组合",
+        "分组贡献",
+        "双层环图",
+        "SHAP contribution",
+        "特征贡献占比"
+      ],
+      "related_ids": [
+        "advanced.shap_summary",
+        "template.shap_dependence"
+      ],
+      "review": {
+        "visual": "main_preview_inspected",
+        "code": "sample_alignment_and_attribution_arithmetic_checked",
+        "statistical_audit": false
+      },
+      "card_path": "cards/template.shap_contribution.md",
+      "fidelity_checkpoints": [
+        {
+          "feature": "左侧重要性排名及百分比；空白处嵌双层变量/类别贡献环；右侧同序方形蜂群和连续色条",
+          "preserve": "保留排名与右侧蜂群的同一变量顺序及行对齐、条末占比和原始重要性、左侧空白处双层环及白色分隔、组内色阶与方形透明散点。",
+          "allowed_adaptation": "变量分组必须有实际含义；占比分母和环图均覆盖全部输入变量，top筛选不改变归一化。组贡献采用各变量mean(abs(SHAP))之和，不与有符号组归因混淆。",
+          "evidence": [
+            {
+              "line": 272,
+              "end_line": 272,
+              "code": "    ax.barh(range(len(order)),importance[order],color=[feature_colors[j] for j in order],",
+              "href": "sources/shap-composites/original.html#L272"
+            },
+            {
+              "line": 300,
+              "end_line": 300,
+              "code": "    ring.pie(outer,radius=1,startangle=90,counterclock=False,",
+              "href": "sources/shap-composites/original.html#L300"
+            },
+            {
+              "line": 304,
+              "end_line": 304,
+              "code": "    ring.pie(importance[inner],radius=.70,startangle=90,counterclock=False,",
+              "href": "sources/shap-composites/original.html#L304"
+            },
+            {
+              "line": 321,
+              "end_line": 321,
+              "code": "        ax2.scatter(shap[:,j],row+swarm_offsets(shap[:,j],max_width=.25),",
+              "href": "sources/shap-composites/original.html#L321"
+            },
+            {
+              "line": 325,
+              "end_line": 325,
+              "code": "    ax2.set_ylim(ax.get_ylim()); ax2.set_yticks([])",
+              "href": "sources/shap-composites/original.html#L325"
+            }
+          ]
+        }
+      ],
+      "fidelity_scope": "主要截图结构重建；适配后核对实图。"
     }
   ]
 }

@@ -85,7 +85,7 @@ save_fig(fig, 'figures/fig_pareto.pdf')
 # 2. 方向标注箭头放在图边缘空白处，不要和 Pareto 前沿线或数据重叠
 # 3. 方向箭头放在图边缘空白处，不要让标注超出图表边界
 # 4. 非支配解用小圆点（s=20），支配解用更小的点（s=8, alpha=0.3）
-# 5. xytext 偏移必须确保标注框在 xlim/ylim 范围内，plot_utils 会自动裁剪超出的标注
+# 5. 实际查看 xytext 标注与边界和数据的关系；plot_utils 不会自动解决遮挡或裁切
 ```
 
 ---

@@ -16,6 +16,9 @@ from pathlib import Path
 import re
 import sys
 import tempfile
+import ast
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from template_sources import digest, materialize, preflight
 
 HEADER = re.compile(r'^## (\d+)\.\s+([^\n]+)$', re.MULTILINE)
 ID_REF = re.compile(r'\brecipe:([a-z][a-z0-9_]*\.[a-z][a-z0-9_]*)\b')
@@ -79,6 +82,26 @@ class Recipes:
                 found.append((m.start(), self.legacy_id(m.group(1), number)))
         return list(dict.fromkeys(key for _, key in sorted(found, key=lambda item: item[0])))
 
+    def script(self, key, variant='main'):
+        key = key.removeprefix('recipe:')
+        chapter = self.extract(key)
+        entry = self.entries[key]
+        variants = entry.get('scripts', {})
+        if variant not in variants:
+            raise ValueError(f'{key}: unregistered variant {variant}; available: {list(variants)}')
+        mapping = variants[variant]
+        blocks = re.findall(r'```python[^\n]*\n(.*?)```', chapter, re.S)
+        if not mapping.get('blocks') or any(type(i) is not int or not 0 <= i < len(blocks) for i in mapping['blocks']):
+            raise ValueError(f'{key}: invalid registered code block mapping')
+        code = '\n\n'.join(blocks[i].strip() for i in mapping['blocks']) + '\n'
+        if digest(code) != mapping['codeSha256']:
+            raise ValueError(f'{key}: registered source differs')
+        ast.parse(code)
+        source = dict(id=key, variant=variant, codeSha256=digest(code),
+                      contentSha256=entry['contentSha256'], file=entry['file'],
+                      blocks=mapping['blocks'], requiredInputs=mapping.get('requiredInputs', []))
+        return code, source
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
@@ -89,10 +112,36 @@ def main(argv=None):
     mode.add_argument('--plan', nargs='+', type=Path)
     mode.add_argument('--list', action='store_true')
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--script', type=Path, help='Create exact Python source and provenance; preserve existing adaptations')
+    parser.add_argument('--scripts-dir', type=Path, help='With --plan, create one working script per selected recipe')
+    parser.add_argument('--workspace', type=Path)
+    parser.add_argument('--variant', default='main')
+    parser.add_argument('--list-variants', action='store_true')
     args = parser.parse_args(argv)
     if (args.id or args.plan or args.list) and (args.category or args.number is not None):
         parser.error('Choose stable ID, plan, list, or legacy category/number')
     recipes = Recipes()
+    if args.script or args.scripts_dir or args.list_variants:
+        if args.output or args.list or (args.script and args.scripts_dir):
+            parser.error('Script/variant mode cannot be combined with Markdown output or list')
+        if args.scripts_dir:
+            if not args.plan: parser.error('--scripts-dir requires --plan')
+            keys = list(dict.fromkeys(key for p in args.plan for key in recipes.references(p.read_text(encoding='utf-8'))))
+            if not keys: raise ValueError('No recipe references found in the supplied plans')
+            jobs = [(key, args.scripts_dir / ('gen_fig_' + key.replace('.', '_') + '.py')) for key in keys]
+        else:
+            key = args.id or (recipes.legacy_id(args.category, args.number) if args.category and args.number is not None else None)
+            if not key: parser.error('--script/--list-variants requires a recipe ID')
+            if args.list_variants:
+                recipes.extract(key)
+                print(json.dumps(recipes.entries[key.removeprefix('recipe:')].get('scripts', {}), ensure_ascii=False, indent=2))
+                return 0
+            jobs = [(key, args.script)]
+        prepared = [(path, *recipes.script(key, args.variant)) for key, path in jobs]
+        for path, code, source in prepared: preflight(path, code, source, args.workspace)
+        for path, code, source in prepared:
+            print(json.dumps(materialize(path, code, source, args.workspace), ensure_ascii=False))
+        return 0
     if args.list:
         result = '\n'.join(f"recipe:{key}\t{entry['title']}" for key, entry in recipes.entries.items())
     elif args.plan:

@@ -48,6 +48,10 @@ class CatalogTests(unittest.TestCase):
                 if card['id']=='template.sem_violin_pearson':
                     self.assertEqual((ROOT/'templates/sem-violin-pearson/plot_sem_violin_pearson.py').read_bytes(),(CATALOG/card['source']['original_code']).read_bytes())
                     continue
+                if card['kind']=='complete_template':
+                    current=CATALOG/card['source']['execution_code']
+                    self.assertEqual(current.read_bytes(),(CATALOG/card['source']['original_code']).read_bytes())
+                    continue
                 block=re.search(r'```python\s*\n(.*?)\n```',recipes.extract(card['id']),re.S)
                 self.assertIsNotNone(block)
                 self.assertEqual(block[1].strip(),(CATALOG/card['source']['original_code']).read_text(encoding='utf8').strip())

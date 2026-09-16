@@ -27,12 +27,14 @@ python "<SKILL>/scripts/profile_figure_data.py" "<WORKSPACE>/data.xlsx" --sheet 
 
 在现有图表计划或任务记录里保留所选 ID、预览路径和简短理由即可，无需新增表单或审批。卡片帮助找图，不替代原绘图指导与完整源码。
 
-140 个配方（含新增截图恢复模板）均用当前资源提取器加载完整章节：
+143 个配方（含新增截图恢复模板）均用当前资源提取器将完整主示例写入工作脚本：
 
 ```bash
-python "<SKILL>/original/resources/assets/shared-scripts/get_recipe.py" --id advanced.pair_plot
+python "<SKILL>/original/resources/assets/shared-scripts/get_recipe.py" --id advanced.pair_plot --script figures/gen_fig_pair_plot.py
 ```
 
 完整组合模板 `template.sem_violin_pearson` 使用 [专用说明](templates/sem-violin-pearson/TEMPLATE.md)。选定后按 [源码底稿与保真要点](template-fidelity.md)，复制所选完整源码，在原结构内适配数据，动笔前读取所选卡片的保留重点与允许适配范围；随后继续原工作流的绘制、看图和修复。
 
-目录中的 `sources/` 是解释预览的历史证据，实际绘制加载当前配方。更新配方或图库时核对来源与预览是否一致，不在每次绘图前新增全库验证。当前卡片覆盖每个配方的主要示例；聚类热力图的另一个完整变体保存在原章节中，尚无独立预览，仍可从完整配方使用。
+`template.shap_dependence` 与 `template.shap_contribution` 使用 [SHAP完整组合说明](templates/shap-composites/TEMPLATE.md) 和共享脚本的对应模式，不通过配方提取器调用。两套分别用于“重要性与特征响应”和“变量及类别贡献”，均需要对应的特征值与SHAP值。
+
+目录中的 `sources/` 是解释预览的历史证据，实际绘制加载当前配方。更新配方或图库时核对来源与预览是否一致，不在每次绘图前新增全库验证。当前卡片覆盖每个配方的主要示例；聚类热力图的另一个完整变体保存在原章节中，尚无独立预览，可用 --variant two_way 提取并接入真实输入。

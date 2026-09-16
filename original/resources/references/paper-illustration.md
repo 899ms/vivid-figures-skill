@@ -495,3 +495,5 @@ figures/ai_generated/
 | Step 3 | 当前助手 reasoning | CVPR/NeurIPS style verification |
 | Step 4 | 宿主图像生成工具 (宿主图像生成工具) | High-quality image rendering |
 | Step 5 | 当前助手 | STRICT visual review and scoring |
+
+场景构图可按需参考 [场景提示词](figure-scene-prompts.md)。

@@ -1,27 +1,31 @@
 ---
 name: vivid-figures-skill
-description: 使用完整的生动数据图指导、140个完整配方（含32个新增截图恢复模板）和辅助脚本，规划、生成、修改及检查数学建模与科研图表；涵盖数据图、Draw.io/TikZ技术图、HTML/Mermaid和科学场景插图。
+description: 规划、生成、修改和检查数学建模与科研图表；包含143个完整源码配方、3套组合模板、统一配色和来源差异工具，以及Draw.io/TikZ、HTML/Mermaid和科学场景插图。
 ---
 
-# Vivid Figures Skill — 生动数据图
+# Vivid Figures Skill
 
-使用开放 Agent Skills 格式。一套绘图指导、统一项目配置及按需加载的完整配方，支持数据图和多种技术图。
+一套绘图指导、一个入口。根据当前任务加载下列资源，已读且未变化的内容复用；阶段划分不要求额外模型调用。
+
+## 数据图
+
+1. **选择**：尚未指定模板时读取 [数据与模板选择](figure-selection.md) 和 [设计目标](original/drawing-guide.md)，按数据与目的检索卡片、查看候选实图。用户指定模板、修图或换色时沿用选择，直接进入适配。
+2. **适配**：读取 [源码底稿与保真](template-fidelity.md)，用工具将选定的完整源码写成工作脚本，在这个实际文件上修改。读取所选卡片及预览、[执行环境](host-adapter.md)、[数据图执行](original/resources/references/paper-figure.md)、[配色](color-selection.md) 和 [尺寸预计算](original/fragments/original-size-preflight.md)。只加载本次需要的模板和专题。
+3. **检查**：用来源底稿比较当前源码，再按 [检查与修复](original/review-policy.md) 打开实际图件，核对模板特点、数据口径与可读性。差异提示不是视觉通过结论，必要适配不必为消除提示改回演示数据。
+
+所选模板的具体实现决定默认视觉结构；通用技法帮助解决实际问题。数据真实性及用户要求决定需要适配什么；选图阶段的新颖性目标不要求适配阶段重新设计。
 
 ## 完整组合模板
 
-需要问卷残差分布与相关关系组合图，或用户指定原版“小提琴＋Pearson 组合图”时，读取 [完整模板调用说明](templates/sem-violin-pearson/TEMPLATE.md)，直接运行随附原版代码；该模板默认保留自身样式，按专用说明执行。
+- `template.sem_violin_pearson`：[小提琴＋Pearson](templates/sem-violin-pearson/TEMPLATE.md)，保留原版默认样式。
+- `template.shap_dependence` / `template.shap_contribution`：[SHAP组合](templates/shap-composites/TEMPLATE.md)，保留完整布局与真实SHAP输入口径。
 
-## 数值图模板检索
+完整组合使用各自的源码和CLI，并按保真说明保存来源；不拆成普通配方重新拼接。
 
-首次选择数值图模板时读取 [数据与模板选择](figure-selection.md)，结合数据与目的跨库查卡片、看候选实图，再加载完整配方；这一步落实原有候选检索，不重复规划，修图和换色沿用已选模板。适用于下述上游规划及绘图工作流中的选图步骤。
+## 其他任务
 
-选定或沿用模板后，按 [源码底稿与保真要点](template-fidelity.md) 复制完整代码并局部适配，绘制前读取所选卡片的源码保留重点；修图和换色也沿用这些要点。
+- 完整论文或整题图集：先读 [上游规划](original/upstream-planning.md) 和 [绘图入口](original/resources/ENTRYPOINT.md)，保留 FIGURE_MANIFEST 分类、执行顺序与对账。明确单图或用户限定的小批数据图不重启整题规划。
+- 技术图、HTML、Mermaid或场景插图：读 [绘图入口](original/resources/ENTRYPOINT.md)，只加载所选路由。数值图不因初始化加载这些指导。
+- 需要特定统计、优化、网络或布局知识时，再读相应 `original/fragments/` 或 [知识索引](original/resources/assets/shared-scripts/figure_style_guide.md) 指向的专题。
 
-## 加载与执行
-
-1. 首次使用读取 [执行环境与配置](host-adapter.md)、[绘图指导](original/drawing-guide.md)、[检查与修复](original/review-policy.md) 及 [绘图入口](original/resources/ENTRYPOINT.md)。按入口选择工作流，完整读取其关联参考文档；未变化的指导可复用。只读本次涉及的图型，不加载所有工作流。
-2. 数据图读取 [尺寸预计算](original/fragments/original-size-preflight.md)、[配方用色](original/fragments/original-color-usage.md) 和 [配色选择](color-selection.md)。按任务再读 [数值](original/fragments/data-figures.md)、[统计/机器学习](original/fragments/statistics-figures.md)、[优化](original/fragments/optimization-figures.md)、[图网络](original/fragments/graph-network-figures.md) 或 [技术图](original/fragments/technical-diagrams.md)。
-3. 新建完整论文或整题图集时，执行 [上游规划](original/upstream-planning.md)。明确单图、已有图修复或用户限定的小批图，不重启整题规划。保留 FIGURE_MANIFEST 分类、执行顺序及恢复对账。
-4. 执行 bootstrap、配置配色、检索完整配方、保真适配、绘制、实际看图和修复。修图和换色沿用已选模板，按保真要点保留渐变、透明度、描边和信息元素。
-
-参考文档中的 `references/`、`workflows/`、`scripts/`、`assets/` 相对于 `original/resources/`；`_utils/`、`figures/`、`skills/shared-scripts/` 相对于任务工作区。优先使用本包维护的资源。
+`<SKILL>` 为本包目录，`<RES>` 为 `original/resources`；`_utils/`、`figures/` 和 `.vivid/` 均相对于任务工作区。工作流中的脚本路径相对于 `<RES>`，使用本包当前资源。

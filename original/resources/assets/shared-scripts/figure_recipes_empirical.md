@@ -113,11 +113,11 @@ save_fig(fig, 'figures/fig_forest.pdf')
 
 **★ 防遮挡技巧（森林图专用）：**
 ```python
-# 1. 数值标签必须用 smart_labels()：系数密集时固定偏移必定重叠
-# 2. xlim 右侧留值域 15% 余量：给标签留空间
+# 1. 保留模板已有标签列；密集时可按需用 smart_labels() 或位置调整
+# 2. 按标签列和最终显示尺寸留出空间，不固定值域余量
 # 3. 零线标注放在图顶部或底部：不要放在数据密集的中间
 # 4. 置信区间线很短时（CI 窄）：标签偏移量按值域比例计算，不要用固定像素
-# 5. 变量名长（>10 字符）：fontsize=8.5，或用缩写+脚注
+# 5. 长变量名按实际尺寸调整画布、字号或缩写，并保留可查全称
 # 6. 自适应高度：_fig_h = max(4, n_vars*0.5+1.5)
 # 7. 分组分隔线（如果有变量分组）：用 axhline + 淡灰色，不要用粗黑线
 ```
@@ -509,7 +509,7 @@ setup_style()
 np.random.seed(42)
 n = 200; fitted = np.random.uniform(2, 8, n); resid = np.random.normal(0, 0.5, n)
 
-fig, axes = plt.subplots(2, 2, figsize=(5.0, 4.9))   # ⛔ 2×2 是近方图，上页只显示 4.55in → 原生 5.0in（写 10 会缩到 0.46）
+fig, axes = plt.subplots(2, 2, figsize=(5.0, 4.9))   # 示例尺寸；保留模板比例，按实际显示尺寸检查字号与布局
 
 ax = axes[0, 0]
 ax.scatter(fitted, resid, alpha=0.45, s=18, color=PALETTE[0], edgecolor='white', linewidth=0.3, zorder=3)

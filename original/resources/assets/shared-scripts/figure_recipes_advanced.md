@@ -1402,18 +1402,14 @@ save_fig(fig, 'figures/fig_cluster_heatmap.pdf')
 #    正确做法：行树状图放最左、行标签移到热力图【右侧】(ax_heat.yaxis.tick_right())，两者彻底分开。
 #    完整可跑代码见下方「变体：双向聚类热力图(带行树状图 + 标签移右侧)」。
 #    (若只做列聚类、行不聚类，仍按上面主配方：只画列树状图、行标签留左侧即可。)
-# 5. 不要手动写 fig.tight_layout()。注：save_fig 内部虽会调一次 tight_layout，但对 add_axes 的
-#    固定坐标不生效(只打印无害 UserWarning)，手动布局不会被移动——实测保存前后 axes 坐标一致。
+# 5. 此模板使用 add_axes 手动布局；保留其布局方式，局部调整位置后实际检查。
+#    save_fig 不会自动调用 tight_layout 或移动面板，不依赖保存阶段修复间距。
 # 6. 数值标注颜色需要适应：abs(val)>0.6 用白色字，其余用深色字
-# 7. ★ y 标签超长（>20 字符）兜底：调用 auto_truncate_yticklabels(ax_heat, max_chars=18)
-#    或在数据准备阶段就用缩写（'avg_silhouette_2024' 而非 'average_silhouette_coefficient_2024'）。
-#    plot_utils._save 会在检测到 y label 溢出 figure 左边界时自动截断 + 减字号兜底，
-#    但生成阶段就避免超长更稳妥。
-# 8. ★ 长标签场景：宽度用 7.0-7.2 英寸（⛔ 上限 7.2，别写 9-10 —— 单栏正文才 6.5in，
-#    原生 10in 会被缩到 0.53、刻度 8.5pt 变 4.5pt、线宽腰斩 → 坐标轴糊成一团、线条发虚），
-#    并把 _left 提到 0.26-0.30 换取标签空间（7.2×0.28 ≈ 2.0 英寸，够放 18 字符截断后的标签）。
-#    figsize=(6, ...) 时即便 _left=0.22 实际像素空间只有 1.3 英寸，长标签必溢出。
-#    ⛔ 标签实在放不下就先按第 7 条截断/缩写，不要靠摊大画布 —— 摊得越大缩得越狠，字反而更小。
+# 7. 长标签按可用空间换行、调整边距或采用有完整对应说明的简称。
+#    若使用 auto_truncate_yticklabels，须确认不会损失类别辨识；不按固定字符数自动截断。
+#    plot_utils._save 不会自动截断标签或减小字号，生成脚本需处理并检查边界。
+# 8. 画布宽度、_left 和字号以原模板为起点，按数据标签与实际显示尺寸联合调整。
+#    不设置统一宽度上限；调整后检查标签、树状图、热图和色条是否对齐且清楚。
 ```
 
 **变体：双向聚类热力图（带行树状图 + 标签移右侧，不糊标签）**
@@ -3200,3 +3196,635 @@ save_fig(fig, 'figures/fig_bivariate.pdf')
 
 ---
 
+## 35. 三维分组渐变柱状图
+
+用途：比较两组离散条件交叉组合下的非负测量值，例如材料×掺量、算法×实验条件。
+输入：行标签、列标签、对应高度矩阵；可选真实误差长度。CSV 第一列为行标签，第一行为列名。
+保留：四面分层渐变柱、独立顶面明暗、正交视角、柱顶数值、误差竖线与帽线、白底虚线网格、同分档侧色条。
+配色：从项目 palette_colors() 的原顺序插值为分档颜色，分类取色顺序不用于数值分档；不改变柱面的原有提白曲线。
+示例：66个柱高转录自用户参考图；误差棒为原复现的示意长度，已在预览标注，并非真实实验误差。自定义数据未提供误差时不生成误差棒。
+适配：plot_chart 支持 (行,列) 对称误差或 (2,行,列) 非对称误差；负值、缺失值与越界色档直接报错，不能填零或静默截断。默认新数据使用线性分档；示例保留原不等宽阈值，色条等高色块代表档位而非线性距离。
+局限：三维遮挡会影响密集类别比较；组数过多可按任务减少同屏项或调整视角。该模板不是频数直方图，也不表示连续曲面。
+
+```python
+"""Three-dimensional grouped gradient bars, adapted from the supplied reproduction.
+Default demo heights were transcribed from the reference image; demo errors are
+illustrative only. Custom data never receives invented uncertainty.
+Run from a bootstrapped Vivid workspace, or directly from the installed catalog.
+"""
+from pathlib import Path
+import argparse
+import csv
+import sys
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap, BoundaryNorm, to_rgb, LinearSegmentedColormap
+from matplotlib.colorbar import ColorbarBase
+from matplotlib.ticker import MaxNLocator
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
+# Resolve the active workspace utilities or the installed skill's shared bundle.
+for base in (Path.cwd(), *Path.cwd().parents, *Path(__file__).resolve().parents):
+    candidates = (base / '_utils', base / 'original/resources/assets/shared-scripts')
+    found = next((p for p in candidates if (p / 'vivid_config.py').is_file()), None)
+    if found is not None:
+        sys.path.insert(0, str(found))
+        break
+else:
+    raise RuntimeError('Run Vivid bootstrap in the workspace before using this recipe.')
+from vivid_config import palette_colors
+from plot_utils import setup_style
+
+
+def read_matrix(path):
+    """Wide CSV: first column row label, remaining column headers are conditions."""
+    with Path(path).open(encoding='utf-8-sig', newline='') as stream:
+        rows = list(csv.reader(stream))
+    if len(rows) < 2 or len(rows[0]) < 2 or any(len(r) != len(rows[0]) for r in rows):
+        raise ValueError('Expected a rectangular CSV with row and column labels.')
+    labels, conditions = [r[0] for r in rows[1:]], rows[0][1:]
+    if len(set(labels)) != len(labels) or len(set(conditions)) != len(conditions):
+        raise ValueError('Row and column labels must be unique.')
+    return np.array([[float(v) for v in r[1:]] for r in rows[1:]]), labels, conditions
+
+
+def plot_chart(values, samples, ss, *, errors=None, bounds=None,
+               value_label='Value', sample_label='Sample', condition_label='Condition',
+               note=None):
+    """errors: nonnegative lengths shaped (rows, columns) or (2, rows, columns).
+
+    A 2-D array gives symmetric errors; a 3-D array gives lower/upper lengths.
+    None omits error marks. Heights and colorbar share the same explicit bins.
+    """
+    values = np.asarray(values, dtype=float)
+    if (values.ndim != 2 or values.size == 0 or not np.isfinite(values).all()
+            or (values < 0).any() or values.shape != (len(samples), len(ss))):
+        raise ValueError('Expected finite nonnegative heights matching both label axes.')
+    nrows, ncols = values.shape
+    lower = upper = np.zeros_like(values)
+    if errors is not None:
+        error_array = np.asarray(errors, dtype=float)
+        if error_array.shape == values.shape:
+            lower = upper = error_array
+        elif error_array.shape == (2, *values.shape):
+            lower, upper = error_array
+        else:
+            raise ValueError('Error shape must match heights, optionally with lower/upper axis.')
+        if (not np.isfinite(error_array).all() or (error_array < 0).any()
+                or (lower > values).any()):
+            raise ValueError('Errors must be finite, nonnegative and not cross the zero base.')
+    if bounds is None:
+        # Linear bins for new data; original demo binning is supplied explicitly.
+        bounds = np.linspace(0, max(float(values.max()), 1.0), 12)
+    bounds = np.asarray(bounds, dtype=float)
+    if (bounds.ndim != 1 or len(bounds) < 3 or not np.isfinite(bounds).all()
+            or (np.diff(bounds) <= 0).any()
+            or bounds[0] > values.min() or bounds[-1] < values.max()):
+        raise ValueError('Increasing bin boundaries must cover every height.')
+    setup_style()
+    plt.rcParams.update({'font.family': 'serif', 'font.serif': ['Times New Roman', 'DejaVu Serif'],
+                         'font.weight': 'bold', 'axes.labelweight': 'bold', 'font.size': 12,
+                         'pdf.fonttype': 42, 'axes.linewidth': 1.2})
+    # Numeric bins use the palette's raw ordered scale, not categorical ordering.
+    scale = LinearSegmentedColormap.from_list('vivid_ordered', palette_colors())
+    colors = scale(np.linspace(0, 1, len(bounds)-1))[:, :3]
+    cmap = ListedColormap(colors)
+    norm = BoundaryNorm(bounds, cmap.N, clip=True)
+    fig = plt.figure(figsize=(14.4, 12.8), facecolor='white')
+    ax = fig.add_axes([.015, .055, .81, .90], projection='3d', computed_zorder=False)
+    ax.view_init(elev=27, azim=-56)
+    ax.set_proj_type('ortho')
+    ax.set_box_aspect((max(nrows * 1.1, 2), max(ncols * .955, 2), 8))
+
+    # Side faces fade from near-white at the foot to the bin color at the top.
+    label_offset = max(float((values + upper).max()), 1.0) * .02
+    faces, facecolors = [], []
+    w, d = .62, .62
+    for i in range(nrows):
+        for j in range(ncols):
+            h = values[i,j]
+            base = np.array(to_rgb(colors[int(norm(h))]))
+            x0, x1, y0, y1 = i-w/2, i+w/2, j-d/2, j+d/2
+            n = 40 if h > 1.5 else 1
+            levels = np.linspace(0, h, n+1)
+            for k in range(n):
+                z0, z1 = levels[k:k+2]
+                t = (k+.5)/n
+                c = base if h <= 1.5 else np.ones(3)*(1-t**.65)+base*t**.65
+                for points, shade in [([(x0,y0,z0),(x1,y0,z0),(x1,y0,z1),(x0,y0,z1)],.98),
+                                      ([(x1,y0,z0),(x1,y1,z0),(x1,y1,z1),(x1,y0,z1)],.88),
+                                      ([(x1,y1,z0),(x0,y1,z0),(x0,y1,z1),(x1,y1,z1)],.92),
+                                      ([(x0,y1,z0),(x0,y0,z0),(x0,y0,z1),(x0,y1,z1)],1.)]:
+                    faces.append(points)
+                    facecolors.append(np.clip(c*shade,0,1))
+            faces.append([(x0,y0,h),(x1,y0,h),(x1,y1,h),(x0,y1,h)])
+            facecolors.append(np.clip(base*1.04,0,1))
+    ax.add_collection3d(Poly3DCollection(faces, facecolors=facecolors, edgecolors='none',
+                                        linewidths=0, antialiased=False, zsort='average', zorder=3))
+    # Draw error marks only from the supplied symmetric/asymmetric error lengths.
+    for i in range(nrows):
+        for j in range(ncols):
+            h = values[i,j]
+            err = upper[i,j]
+            if errors is not None:
+                ax.plot([i,i], [j,j], [h-lower[i,j],h+err], c='black', lw=1.25, zorder=5)
+                ax.plot([i-.10,i+.10], [j,j], [h+err,h+err], c='black', lw=1.25, zorder=5)
+            ax.text(i, j, h+err+label_offset, f'{h:.2f}', ha='center', va='bottom',
+                    fontsize=10, zorder=6, bbox=dict(facecolor='white', edgecolor='none', alpha=.87, pad=.15))
+    ax.set(xlim=(-.65,nrows-.35), ylim=(-.65,ncols-.35),
+           zlim=(0,max(float((values+upper).max()), 1.0) * 1.08))
+    ax.set_xticks(range(nrows), samples, rotation=-15)
+    ax.set_yticks(range(ncols), ss, rotation=18)
+    ax.zaxis.set_major_locator(MaxNLocator(nbins=12))
+    ax.set_xlabel(sample_label, labelpad=22, fontsize=19)
+    ax.set_ylabel(condition_label, labelpad=24, fontsize=19)
+    ax.set_zlabel(value_label, labelpad=20, fontsize=18)
+    ax.zaxis._axinfo['juggled'] = (1,2,0)
+    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        axis.set_pane_color((1,1,1,1))
+        axis.pane.set_edgecolor('black')
+        axis._axinfo['grid'].update(color=(.68,.68,.68,1), linestyle='--', linewidth=.8)
+    ax.tick_params(axis='both', labelsize=12, pad=3)
+    cax = fig.add_axes([.865,.205,.024,.63])
+    cb = ColorbarBase(cax, cmap=cmap, norm=norm, boundaries=bounds, ticks=bounds, spacing='uniform')
+    cb.ax.set_yticklabels([f'{v:.3g}' for v in bounds])
+    cb.ax.tick_params(labelsize=14, pad=6)
+    cb.set_label(value_label, fontsize=18, labelpad=17)
+    if note:
+        fig.text(.05, .018, note, fontsize=11, color='#444444')
+    return fig
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--data', type=Path, help='Wide CSV of heights')
+    parser.add_argument('--errors', type=Path, help='Wide CSV of symmetric error lengths, matching data labels')
+    parser.add_argument('--output', type=Path, default=Path('figures/fig_grouped_bar_3d'))
+    parser.add_argument('--value-label', default=None)
+    args = parser.parse_args()
+    if args.data:
+        values, samples, conditions = read_matrix(args.data)
+        errors = None
+        if args.errors:
+            errors, error_rows, error_cols = read_matrix(args.errors)
+            if samples != error_rows or conditions != error_cols:
+                raise ValueError('Error CSV labels and order must match the data CSV.')
+        fig = plot_chart(values, samples, conditions, errors=errors,
+                         value_label=args.value_label or 'Value')
+    else:
+        if args.errors:
+            parser.error('--errors requires --data')
+        # Heights transcribed from the user reference. Errors are illustrative.
+        samples = ['C-28', 'C-7', 'C-3', 'C-1', 'U-28', 'U-1']
+        conditions = ['SS-0', 'SS-0.1', 'SS-0.2', 'SS-0.3', 'SS-0.4', 'SS-0.5', 'SS-0.6', 'SS-0.7', 'SS-0.8', 'SS-0.9', 'SS-1']
+        values = np.array([[0.34, 3.95, 8.36, 13.81, 16.24, 23.39, 32.97, 35.36, 38.44, 46.64, 57.14], [0.33, 3.12, 7.98, 13.09, 14.75, 20.15, 28.26, 31.24, 35.76, 42.32, 55.28], [0.3, 3.01, 6.3, 12.16, 13.12, 18.45, 25.76, 28.29, 33.03, 37.68, 49.88], [0.28, 2.84, 5.48, 9.72, 11.09, 14.44, 22.31, 25.53, 30.48, 34.04, 36.08], [0.33, 2.77, 4.23, 5.52, 6.12, 7.29, 9.26, 10.76, 13.49, 14.24, 17.13], [0.21, 0.55, 0.71, 0.81, 1.12, 1.24, 2.59, 3.54, 3.86, 4.07, 6.31]])
+        upper = np.maximum(.10, .025 * values)
+        errors = np.stack([.35 * upper, upper])
+        bounds = [.21, .35, .58, .97, 1.6, 2.7, 4.5, 7.4, 12.4, 20.6, 34.3, 57.14]
+        fig = plot_chart(values, samples, conditions, errors=errors, bounds=bounds,
+                         value_label=args.value_label or 'Compressive strength /MPa',
+                         condition_label='SS Content',
+                         note='Reference-label heights; illustrative error bars (not measured).')
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    for suffix in ('png', 'pdf'):
+        fig.savefig(args.output.with_suffix('.' + suffix), dpi=300,
+                    facecolor='white', bbox_inches='tight', pad_inches=.25)
+    plt.close(fig)
+    print('Saved PNG and PDF:', args.output)
+
+
+if __name__ == '__main__':
+    main()
+```
+
+## 36. 多Y轴渐变直方图与正态拟合
+
+用途：比较多个方法或样本群体在共同测量变量上的分布位置、离散程度与形状。
+数据：1–3组同一物理量、同单位的原始观测；长表CSV列为group,value。频数由实际样本分箱统计，不能输入已经汇总的频数冒充原始样本。
+结构：共享X轴；第一组左Y轴，其余组右Y轴并外移；组别同色刻度、柱体和虚线；每根柱体从透明底部到有色顶部渐变；白底图例列出样本量及正态拟合参数。
+保真：保留64层矢量透明渐变、三组重叠、同色轴关联、正态虚线和独立图层顺序。所有曲线置于柱体上方，双轴的数据变换分别绑定，不把第三组曲线错误放到主轴刻度上。
+配色：使用当前项目categorical_colors()固定分类顺序，支持七套主题和自定义配色；不同组至少需要同数量的颜色；--reference-colors明确使用参考图红蓝青颜色，其余调用遵循当前项目配色。
+统计：组内等宽分箱，允许各组宽度与边界不同；每组拟合mu=mean、sigma=std(ddof=0)，曲线高度为N×箱宽×正态密度，频数仅为箱计数，曲线是预期频数的近似。正态拟合不等于正态性检验；非正态或零方差数据可用fit=False/--no-fit保留直方图。非有限值、缺失组名和不覆盖样本的分箱报错，不静默删除或截断。
+注意：独立Y轴的柱高不能直接跨组比较频数；对绝对频数的比较优先使用共Y轴直方图，比较概率形状可用归一化密度。此模板中的Y轴均为频数，不为多种单位的趋势图。
+来源：只有用户效果截图，无原始代码、样本数据与可核验作者；按视觉结构重建。演示为固定种子模拟数据，图中明确标注，不冒充截图研究数据。
+
+```python
+"""Shared-X gradient histograms, independent colored Y axes and normal fits.
+Reconstructed from a user image; default samples are synthetic, not paper data.
+Custom CSV uses columns group,value. Normal fits describe data; they do not
+establish normality. Independent Y scales do not permit direct height comparison.
+"""
+from pathlib import Path
+import argparse
+import csv
+import json
+import sys
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.collections import PolyCollection
+from matplotlib.colors import to_rgb
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
+from matplotlib.ticker import MaxNLocator, MultipleLocator
+
+for base in (Path.cwd(), *Path.cwd().parents, *Path(__file__).resolve().parents):
+    found = next((p for p in (base/'_utils', base/'original/resources/assets/shared-scripts')
+                  if (p/'vivid_config.py').is_file()), None)
+    if found is not None:
+        sys.path.insert(0, str(found))
+        break
+else:
+    raise RuntimeError('Run Vivid bootstrap in the workspace before using this recipe.')
+from vivid_config import categorical_colors
+from plot_utils import setup_style
+
+
+def read_samples(path):
+    groups = {}
+    with Path(path).open(encoding='utf-8-sig', newline='') as stream:
+        rows = csv.DictReader(stream)
+        if not {'group', 'value'}.issubset(rows.fieldnames or []):
+            raise ValueError('CSV requires group,value columns.')
+        for row in rows:
+            name = row['group'].strip()
+            if not name:
+                raise ValueError('Group labels cannot be empty.')
+            groups.setdefault(name, []).append(float(row['value']))
+    return groups
+
+
+def plot_chart(groups, *, bins=14, xlabel='Residual', fit=True, ylimits=None,
+               note=None, colors=None, xlim=None, ytick_step=None):
+    """One to three groups of raw observations with a shared X scale.
+
+    bins may be shared or a dict of group-specific equal-width bin edges.
+
+    Each normal curve is mean/std(ddof=0) fitted to its own raw sample, scaled
+    by sample count * bin width to approximate frequency on that group's axis.
+    Optional ylimits supplies one (0, upper) pair per group without clipping.
+    """
+    if not 1 <= len(groups) <= 3:
+        raise ValueError('Use one to three groups to keep the independent axes readable.')
+    arrays = {str(name): np.asarray(values, dtype=float) for name, values in groups.items()}
+    if len(arrays) != len(groups) or any(not name.strip() for name in arrays):
+        raise ValueError('Group labels must be distinct nonempty strings.')
+    for name, values in arrays.items():
+        if values.ndim != 1 or len(values) < 2 or not np.isfinite(values).all():
+            raise ValueError(f'{name}: provide at least two finite raw observations.')
+        if fit and values.std(ddof=0) <= 0:
+            raise ValueError(f'{name}: zero variance; disable the normal fit.')
+    combined = np.concatenate(list(arrays.values()))
+    if isinstance(bins, dict) and set(bins) != set(arrays):
+        raise ValueError('Group-specific bins must include every group exactly once.')
+    bin_edges = {}
+    for name, values in arrays.items():
+        edges = np.histogram_bin_edges(values if isinstance(bins,dict) else combined,
+                                       bins=bins[name] if isinstance(bins,dict) else bins)
+        widths = np.diff(edges)
+        if (len(widths) < 2 or not np.isfinite(edges).all() or (widths <= 0).any()
+                or not np.allclose(widths, widths[0])
+                or edges[0] > values.min() or edges[-1] < values.max()):
+            raise ValueError('Each group needs equal-width bins covering all its observations.')
+        bin_edges[name] = edges
+    if ylimits is not None and len(ylimits) != len(arrays):
+        raise ValueError('Supply one Y range for every group.')
+    if ytick_step is not None and (not np.isfinite(ytick_step) or ytick_step <= 0):
+        raise ValueError('Y tick step must be positive and finite.')
+
+    setup_style()
+    colors = categorical_colors() if colors is None else colors
+    if len(colors) < len(arrays):
+        raise ValueError('The selected palette needs at least one color per group.')
+    plt.rcParams.update({'font.family': 'serif', 'font.serif': ['Times New Roman', 'DejaVu Serif'],
+                         'font.weight': 'bold', 'axes.labelweight': 'bold',
+                         'pdf.fonttype': 42, 'font.size': 11, 'axes.linewidth': 1.25})
+    fig, host = plt.subplots(figsize=(9.5, 7.2))
+    fig.subplots_adjust(left=.085, right=.86 if len(arrays) == 3 else .92,
+                        bottom=.12, top=.975)
+    axes = [host] + [host.twinx() for _ in range(len(arrays)-1)]
+    extent = (min(e[0] for e in bin_edges.values()), max(e[-1] for e in bin_edges.values()))
+    if xlim is not None and (len(xlim)!=2 or not np.isfinite(xlim).all()
+                            or xlim[0]>extent[0] or xlim[1]<extent[1]):
+        raise ValueError('X range must cover all histogram bins.')
+    host.set_xlim(*(extent if xlim is None else xlim))
+    host.set_xlabel(xlabel, fontsize=15)
+    host.spines['top'].set_visible(True)
+    host.tick_params(axis='x', top=True, direction='in', width=1.25, length=6)
+    # All data layers live on the host with each group's own data transform.
+    # This keeps every dashed fit above all translucent bars across twin axes.
+    host.set_zorder(10)
+    for ax in axes:
+        ax.patch.set_visible(False)
+        ax.grid(False)
+    legend_bars, legend_fits, stats = [], [], []
+    for i, ((name, values), ax) in enumerate(zip(arrays.items(), axes)):
+        color = colors[i]
+        edges = bin_edges[name]
+        widths = np.diff(edges)
+        counts, _ = np.histogram(values, bins=edges)
+        mu, sigma = float(values.mean()), float(values.std(ddof=0))
+        xfit = np.linspace(*host.get_xlim(), 700)
+        yfit = (len(values)*widths[0]/(sigma*np.sqrt(2*np.pi))
+                * np.exp(-.5*((xfit-mu)/sigma)**2)) if fit else np.zeros_like(xfit)
+        peak = max(float(counts.max()), float(yfit.max()), 1.)
+        ylim = (0., peak*1.28) if ylimits is None else tuple(ylimits[i])
+        if len(ylim) != 2 or not np.isfinite(ylim).all() or ylim[0] != 0 or ylim[1] < peak:
+            raise ValueError('Y ranges must start at zero and cover all counts and fitted peaks.')
+        ax.set_ylim(*ylim)
+        side = 'left' if i == 0 else 'right'
+        if i:
+            ax.spines['left'].set_visible(False)
+            ax.spines['top'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
+            ax.spines['right'].set_position(('axes', 1.+.12*(i-1)))
+        else:
+            ax.spines['right'].set_visible(False)
+        ax.spines[side].set_color(color)
+        ax.spines[side].set_visible(True)
+        ax.tick_params(axis='y', colors=color, direction='in', width=1.3, length=6)
+        ax.yaxis.set_major_locator(MaxNLocator(nbins=6, integer=True) if ytick_step is None
+                                  else MultipleLocator(ytick_step))
+        # Reference layout: one black frequency label; group/axis mapping is
+        # carried by colored ticks and the matching legend, not repeated titles.
+        ax.set_ylabel('Frequency' if i == 0 else '', color='black', fontsize=15, labelpad=6)
+
+        # True alpha gradient: transparent foot to colored cap, not an opaque
+        # white rectangle. Earlier groups remain visible through overlaps.
+        vertices, facecolors = [], []
+        rgb = to_rgb(color)
+        for left, width, height in zip(edges[:-1], widths, counts):
+            if height == 0:
+                continue
+            levels = np.linspace(0., float(height), 65)
+            for k, (low, high) in enumerate(zip(levels[:-1], levels[1:])):
+                x0, x1 = left+.11*width, left+.89*width
+                vertices.append([(x0,low),(x1,low),(x1,high),(x0,high)])
+                facecolors.append((*rgb, .02+.76*((k+.5)/64)**.85))
+        host.add_collection(PolyCollection(vertices, facecolors=facecolors,
+                            edgecolors='none', antialiased=False,
+                            transform=ax.transData, zorder=2+({0:.1,1:0.,2:.2}[i])), autolim=False)
+        legend_bars.append(Patch(facecolor=color, alpha=.75, edgecolor='none',
+                                 label=name))
+        if fit:
+            host.plot(xfit, yfit, color=color, ls='--', lw=2.2,
+                      transform=ax.transData, zorder=5)
+            legend_fits.append(Line2D([],[],color=color,ls='--',lw=2.2,
+                                      label=fr'{name} fit ($\mu={mu:.1f},\ \sigma={sigma:.1f}$)'))
+        stats.append(dict(group=name,n=len(values),mean=mu,std_mle=sigma,
+                          counts=counts.tolist(),bin_edges=edges.tolist(),
+                          color=color,ylim=list(ylim),fit='normal_mle' if fit else None))
+    host.legend(handles=legend_bars[::-1]+legend_fits[::-1],loc='upper left',fontsize=8.6,
+                handlelength=2.2,labelspacing=.25,borderpad=.4,
+                frameon=True,facecolor='white',edgecolor='#aaaaaa',framealpha=.94)
+    if note:
+        fig.text(.085,.025,note,fontsize=8,color='#444444')
+    return fig, stats
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--data',type=Path,help='Long CSV: group,value')
+    parser.add_argument('--bins',type=int,default=None)
+    parser.add_argument('--no-fit',action='store_true')
+    parser.add_argument('--reference-colors',action='store_true',help='Explicit screenshot color reproduction; otherwise use the project palette')
+    parser.add_argument('--xlabel',default='Residual')
+    parser.add_argument('--output',type=Path,default=Path('figures/fig_multi_y_gradient_hist'))
+    args = parser.parse_args()
+    if args.data:
+        groups, note = read_samples(args.data), None
+    else:
+        groups = {}
+        # Controlled synthetic samples match the reference's approximate widths
+        # and locations; neither counts nor samples were recovered from the paper.
+        for name,n,mu,sigma,seed in [('Group A',90,3.1,14.3,17),
+                                     ('Group B',105,-6.5,23.4,53),
+                                     ('Group C',100,2.5,10.,11)]:
+            sample = np.random.default_rng(seed).normal(size=n)
+            groups[name] = (sample-sample.mean())/sample.std()*sigma+mu
+        note = 'Synthetic reconstruction; independent colored Y scales.'
+    options = {}
+    if args.data is None and args.bins is None:
+        # Offset bins reproduce the interleaved bars visible in the reference.
+        options = dict(bins={'Group A':np.arange(-70.,71.,10.),
+                             'Group B':np.arange(-72.,79.,10.),
+                             'Group C':np.arange(-68.,77.,8.)},
+                       ylimits=[(0,29),(0,27),(0,33.5)],ytick_step=5)
+    else:
+        options['bins'] = args.bins if args.bins is not None else 14
+    if args.reference_colors:
+        options['colors'] = ['#E74C3C','#40516D','#22998D']
+    fig, stats = plot_chart(groups,xlabel=args.xlabel,fit=not args.no_fit,note=note,**options)
+    args.output.parent.mkdir(parents=True,exist_ok=True)
+    for suffix in ('png','pdf'):
+        fig.savefig(args.output.with_suffix('.'+suffix),dpi=300,facecolor='white',
+                    bbox_inches='tight',pad_inches=.2)
+    args.output.with_suffix('.json').write_text(json.dumps(stats,ensure_ascii=False,indent=2),encoding='utf8')
+    if args.data is None:
+        with args.output.with_suffix('.csv').open('w',encoding='utf8',newline='') as stream:
+            writer=csv.writer(stream);writer.writerow(['group','value'])
+            for name,values in groups.items():
+                writer.writerows((name,float(v)) for v in values)
+    plt.close(fig)
+    print('Saved PNG, PDF and statistics:',args.output)
+
+
+if __name__ == '__main__':
+    main()
+```
+
+## 37. 立体方块相关性热图
+
+用途：展示多个变量两两之间的正负相关关系，并用浮雕方块突出矩阵结构。
+输入：至少3行完整观测的数值表，或已计算的Pearson相关矩阵；2–40个变量及唯一标签。原始数据不允许缺失、非有限值或常数列；相关矩阵须对称、对角线为1、值域[-1,1]且在数值容差内半正定。不能把任意随机方阵当相关矩阵。
+结构：完整N×N矩阵，固定斜投影，方形正面加两片阴影侧壁，密集细棱线、顶部阶梯轮廓、左侧行标签、底部竖排列标签与侧边Pearson r色条；PNG和PDF均由确定性矢量多边形绘制。
+数据编码：正面颜色严格对应r，色条固定[-1,1]；凸起长度h=relief×(0.12+1.4×(r+1)/2)，随有符号r增加，非abs(r)。高度规则是本模板明确选定的约定，参考图未提供原高度定义。阴影侧面不用于读取相关系数；标签锚定原矩阵基座，正面随凸起向右上平移。
+配色：常规调用读取当前主题的发散色阶，保留r=0中性中心；--reference-colors明确选择参考蓝色色阶。不会修改共享热图配色算法。可传入cmap覆盖，正面和色条必须同源。
+来源：用户仅提供效果图，无原始代码和数据；按图重建立体结构，示例由固定种子潜在因子样本计算相关矩阵。领域标签沿用截图作版式演示，不代表该研究的实测相关关系。
+局限：浮雕遮挡可能削弱逐格精确查值；需要精确读数时配合矩阵CSV或平面热图。布局不是可旋转的三维场景，也不含显著性或因果判断；不平滑、不重排、不填造缺失值。
+
+```python
+"""Oblique relief correlation matrix reconstructed from a user reference image.
+Square cell faces retain matrix layout; two shaded walls connect to the base.
+Color encodes signed Pearson r. Extrusion length is 0.12 + 1.4*(r+1)/2;
+this height rule is a declared template choice, not recovered from the image.
+"""
+from pathlib import Path
+import argparse
+import csv
+import json
+import sys
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+from matplotlib.colors import Normalize, LinearSegmentedColormap
+from matplotlib.cm import ScalarMappable
+
+for base in (Path.cwd(), *Path.cwd().parents, *Path(__file__).resolve().parents):
+    found=next((p for p in (base/'_utils',base/'original/resources/assets/shared-scripts')
+                if (p/'vivid_config.py').is_file()),None)
+    if found is not None:
+        sys.path.insert(0,str(found));break
+else:
+    raise RuntimeError('Run Vivid bootstrap in the workspace before using this recipe.')
+from plot_utils import setup_style
+from palette_maps import palette_cmap
+
+
+def validate_correlation(matrix, labels):
+    matrix=np.asarray(matrix,dtype=float)
+    if (matrix.ndim!=2 or matrix.shape[0]!=matrix.shape[1]
+            or not 2<=matrix.shape[0]<=40 or len(labels)!=len(matrix)):
+        raise ValueError('Provide a square correlation matrix of 2–40 labeled variables.')
+    if len(set(labels))!=len(labels) or any(not str(label).strip() for label in labels):
+        raise ValueError('Variable labels must be nonempty and unique.')
+    if not np.isfinite(matrix).all() or np.any(np.abs(matrix)>1+1e-8):
+        raise ValueError('Correlations must be finite and within [-1,1].')
+    if not np.allclose(matrix,matrix.T,atol=1e-8,rtol=0) or not np.allclose(np.diag(matrix),1,atol=1e-8,rtol=0):
+        raise ValueError('Correlation matrices must be symmetric with diagonal 1.')
+    if np.linalg.eigvalsh(matrix).min() < -1e-6:
+        raise ValueError('The supplied matrix is not positive semidefinite; verify its source.')
+    return matrix
+
+
+def from_samples(samples, labels):
+    values=np.asarray(samples,dtype=float)
+    if (values.ndim!=2 or values.shape[0]<3 or values.shape[1]!=len(labels)
+            or not np.isfinite(values).all() or np.any(values.std(axis=0)==0)):
+        raise ValueError('Supply at least three complete observations and nonconstant numeric columns.')
+    return validate_correlation(np.corrcoef(values,rowvar=False),labels)
+
+
+def cell_geometry(row, col, size, r, relief=1.):
+    """Return the two side walls and the colored square face, in draw order."""
+    if not np.isfinite(relief) or relief<0:
+        raise ValueError('Relief must be finite and nonnegative.')
+    x,y=float(col),float(size-1-row)
+    base=np.array([[x,y],[x+1,y],[x+1,y+1],[x,y+1]])
+    height=relief*(.12+1.4*(float(r)+1)/2)
+    face=base+height*np.array([.58,.98])
+    bottom=np.array([base[0],base[1],face[1],face[0]])
+    left=np.array([base[0],base[3],face[3],face[0]])
+    return bottom,left,face,height
+
+
+def plot_chart(matrix, labels, *, cmap=None, relief=1., note=None):
+    """Deterministic 2.5D oblique projection; full N×N matrix, no smoothing.
+
+    Only square faces use the exact colorbar mapping. Side walls are shaded
+    for geometry and must not be used to read correlation values.
+    """
+    matrix=validate_correlation(matrix,labels)
+    n=len(labels)
+    setup_style()
+    cmap=palette_cmap('diverging') if cmap is None else cmap
+    norm=Normalize(-1,1)
+    plt.rcParams.update({'font.family':'sans-serif','font.sans-serif':['Arial','Microsoft YaHei','DejaVu Sans'],
+                         'pdf.fonttype':42,'axes.unicode_minus':False})
+    fig=plt.figure(figsize=(11.4,10.2),facecolor='white')
+    ax=fig.add_axes([.18,.19,.71,.76])
+    # Rows at the top/back first, columns right to left: nearer cells cover
+    # hidden parts of farther walls while every complete matrix cell is kept.
+    faces=[]
+    for row in range(n):
+        for col in range(n-1,-1,-1):
+            r=float(matrix[row,col]);rgb=np.asarray(cmap(norm(r))[:3])
+            bottom,left,face,height=cell_geometry(row,col,n,r,relief)
+            for points,color in ((bottom,rgb*.77),(left,rgb*.87),(face,rgb)):
+                polygon=Polygon(points,closed=True,facecolor=color,
+                                edgecolor='#273641',linewidth=.62,joinstyle='miter')
+                ax.add_patch(polygon)
+            faces.append(dict(row=row,col=col,r=r,height=height,face_color=rgb.tolist()))
+    max_height=relief*1.52
+    ax.set_xlim(-.02,n+.58*max_height+.06)
+    ax.set_ylim(-.02,n+.98*max_height+.06)
+    ax.set_aspect('equal')
+    ax.set_xticks(np.arange(n)+.5,labels,rotation=90,fontsize=7.4 if n>16 else 9)
+    ax.set_yticks(n-np.arange(n)-.5,labels,fontsize=7.4 if n>16 else 9)
+    ax.tick_params(axis='both',which='both',length=0,pad=3)
+    ax.grid(False)
+    for spine in ax.spines.values():spine.set_visible(False)
+    # Fixed limits and an unshaded colorbar preserve the sign and magnitude.
+    cax=fig.add_axes([.925,.455,.013,.13])
+    colorbar=fig.colorbar(ScalarMappable(norm=norm,cmap=cmap),cax=cax,
+                         ticks=[-1,-.5,0,.5,1])
+    cax.set_title('Pearson r',loc='left',fontsize=9,fontweight='bold',pad=5)
+    colorbar.ax.tick_params(labelsize=8,length=2,pad=2)
+    colorbar.outline.set_visible(False)
+    if note:fig.text(.18,.04,note,fontsize=8,color='#444444')
+    return fig,dict(matrix=matrix.tolist(),labels=list(labels),faces=faces,
+                    height_rule='relief * (0.12 + 1.4 * (r + 1) / 2)',projection=[.58,.98])
+
+
+def read_csv(path, matrix_input=False):
+    with Path(path).open(encoding='utf-8-sig',newline='') as stream:rows=list(csv.reader(stream))
+    if len(rows)<2 or any(len(row)!=len(rows[0]) for row in rows):
+        raise ValueError('CSV must be rectangular with a header row.')
+    if matrix_input:
+        labels=rows[0][1:]
+        if [r[0] for r in rows[1:]]!=labels:
+            raise ValueError('Matrix row and column labels and ordering must match.')
+        matrix=np.array([[float(v) for v in row[1:]] for row in rows[1:]])
+        return validate_correlation(matrix,labels),labels,None
+    labels=rows[0];samples=np.array([[float(v) for v in row] for row in rows[1:]])
+    return from_samples(samples,labels),labels,samples
+
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    inputs=parser.add_mutually_exclusive_group()
+    inputs.add_argument('--data',type=Path,help='Observations CSV; numeric columns with variable names')
+    inputs.add_argument('--matrix',type=Path,help='Square correlation CSV with row and column labels')
+    parser.add_argument('--reference-colors',action='store_true',help='Explicit blue reference-style ramp')
+    parser.add_argument('--relief',type=float,default=1.)
+    parser.add_argument('--output',type=Path,default=Path('figures/fig_relief_correlation_heatmap'))
+    args=parser.parse_args()
+    if args.data or args.matrix:
+        matrix,labels,samples=read_csv(args.matrix or args.data,matrix_input=args.matrix is not None)
+        note=None
+    else:
+        # Domain labels follow the reference only to demonstrate its dense layout.
+        # All observations are synthetic latent-factor data, not recovered study data.
+        labels=['ACs','T-SOD','MPNs','DTPNs','CAT','GSH-PX','Unique AAs','Non-Essential AAs',
+                'Essential AAs','Conditionally Essential AAs','SpNDs','Ketone compounds',
+                'Hydrocarbon compounds','Alcohol compounds','MDA','T-AOC','Hardness',
+                'Springiness','POD','Gumminess','Chewiness','Cohesiveness','Elasticity']
+        rng=np.random.default_rng(20260916)
+        latent=rng.normal(size=(360,4))
+        # Heterogeneous loadings produce varied relief instead of uniform blocks.
+        loadings=rng.normal(0,.3,size=(23,4))
+        loadings[:,0]=rng.uniform(.3,1.2,size=23)
+        loadings[:,1]+=.65*np.sin(np.arange(23)*.85)
+        loadings[:,2]+=.55*np.cos(np.arange(23)*.6)
+        loadings[10:15,0]*=-1
+        noise=rng.uniform(.18,.58,size=23)
+        samples=latent@loadings.T+rng.normal(size=(360,23))*noise
+        matrix=from_samples(samples,labels)
+        note='Synthetic data. Face color = Pearson r; relief increases linearly with r.'
+    cmap=None
+    if args.reference_colors:
+        cmap=LinearSegmentedColormap.from_list('reference_blue',
+                     ['#F5FCFC','#CFEAF0','#AAC5E4','#6B9FCB','#399DCB'])
+    fig,stats=plot_chart(matrix,labels,cmap=cmap,relief=args.relief,note=note)
+    args.output.parent.mkdir(parents=True,exist_ok=True)
+    for suffix in ('png','pdf'):
+        fig.savefig(args.output.with_suffix('.'+suffix),dpi=300,facecolor='white',
+                    bbox_inches='tight',pad_inches=.12)
+    args.output.with_suffix('.json').write_text(json.dumps(stats,ensure_ascii=False,indent=2),encoding='utf8')
+    with args.output.with_suffix('.csv').open('w',encoding='utf8',newline='') as stream:
+        writer=csv.writer(stream);writer.writerow(['variable',*labels])
+        writer.writerows([label,*row] for label,row in zip(labels,matrix))
+    if args.data is None and args.matrix is None:
+        with args.output.with_name(args.output.name+'-samples.csv').open('w',encoding='utf8',newline='') as stream:
+            writer=csv.writer(stream);writer.writerow(labels);writer.writerows(samples)
+    plt.close(fig)
+    print('Saved PNG, vector PDF, matrix CSV and geometry:',args.output)
+
+
+if __name__=='__main__':main()
+```

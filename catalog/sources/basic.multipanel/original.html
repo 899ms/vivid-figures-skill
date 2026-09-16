@@ -4,7 +4,7 @@
 <span id="L4"><a href="#L4">   4</a> setup_style()</span>
 <span id="L5"><a href="#L5">   5</a> </span>
 <span id="L6"><a href="#L6">   6</a> np.random.seed(42)</span>
-<span id="L7"><a href="#L7">   7</a> fig, axes = plt.subplots(2, 2, figsize=(5.0, 4.9))   # ⛔ 2×2 是近方图，上页只显示 4.55in → 原生 5.0in（写 10 会缩到 0.46、刻度腰斩）</span>
+<span id="L7"><a href="#L7">   7</a> fig, axes = plt.subplots(2, 2, figsize=(5.0, 4.9))   # 示例尺寸；保留模板比例，按实际显示尺寸检查字号与布局</span>
 <span id="L8"><a href="#L8">   8</a> </span>
 <span id="L9"><a href="#L9">   9</a> # (a) 折线图 — 渐变填充</span>
 <span id="L10"><a href="#L10">  10</a> ax = axes[0, 0]</span>

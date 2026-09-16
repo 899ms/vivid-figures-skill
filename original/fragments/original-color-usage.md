@@ -1,6 +1,6 @@
 # DATA：逐图按原版配方取色
 
-生成前，读取已预取的对应配方，沿用其数据角色取色和层次处理，再替换真实数据。来源：resources/references/paper-figure.md 的 Style 与逐图流程；resources/assets/shared-scripts/figure_style_guide.md 的配色方案；figure_recipes_basic.md 的分组柱形、堆叠柱形和多折线配方。以下是这些规则的执行摘要，不替代原文。
+生成前，读取已预取的对应配方，沿用其数据角色取色和层次处理，再替换真实数据。来源：resources/references/paper-figure.md 的 Style 与逐图流程；resources/assets/shared-scripts/figure_color_reference.md 的配色方案；figure_recipes_basic.md 的分组柱形、堆叠柱形和多折线配方。以下是这些规则的执行摘要，不替代原文。
 
 - setup_style() 后从 pu.PALETTE / pu.COLORS 读取当前主题。分类数据按配方用 PALETTE[i]；主次、强调、升降、文字、网格及参考线按对应 COLORS 角色取色。不要把每张图都机械压成前两色，也不要为了变化而逐图重新抽主题；颜色数量和索引由真实数据分组及配方决定。
 - 柱形按配方使用 _lighten(PALETTE[i], 0.4) 浅色填充、PALETTE[i] 原色描边；折线与真实区间沿用同色线条和透明填充。没有区间数据，不为配色而添加区间。不要把这些处理强制套到不适用的图型。

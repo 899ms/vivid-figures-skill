@@ -4,7 +4,7 @@ Use the pattern: classify upstream, record a machine-readable contract, execute 
 
 ## Required decision sequence
 
-1. Read `references/router-contract.md` completely. For a full problem, paper, or multi-figure request, create or update the anchored `FIGURE_MANIFEST` before drawing. Validate it with `python scripts/validate_figure_manifest.py --manifest <planning-document> --profile modeling --full-paper`; fix every failure before rendering. For one explicit figure, apply the same classification rules; a separate manifest is optional.
+1. Read `references/router-contract.md` completely. For a full problem, paper, or complete figure set, create or update the anchored `FIGURE_MANIFEST` before drawing. Validate it with `python scripts/validate_figure_manifest.py --manifest <planning-document> --profile modeling --full-paper`; fix every failure before rendering. For an explicit figure or user-bounded small data-figure batch, apply the same classification rules; a separate manifest is optional.
 2. Run `python scripts/bootstrap.py --workspace <active-project-root> --profile modeling-competition --capability all` before the first deterministic figure.
 3. Execute only the non-empty renderer classes, in this order:
    - DATA/TABLE -> `paper-figure`;
@@ -12,7 +12,7 @@ Use the pattern: classify upstream, record a machine-readable contract, execute 
    - ILLUSTRATION -> `paper-illustration` only for qualifying pictorial or 3-D physical/engineering scenes;
    - HTML -> only when the user explicitly selects HTML instead of Draw.io;
    - MERMAID -> only when Mermaid or text-native maintainability is requested.
-4. For each non-empty class, read `workflows/<name>.md`, then its linked `references/<name>.md`, completely and preserve its drawing methods and templates. Review scope, timing and repair limits follow `../review-policy.md`; legacy review loops do not add extra rounds.
+4. For each non-empty class, read `workflows/<name>.md`, then its linked `references/<name>.md`; load conditional references only when relevant and preserve its drawing methods and templates. Review scope, timing and repair limits follow `../review-policy.md`; legacy review loops do not add extra rounds.
 5. Reconcile the manifest after every pass. A missing planned output keeps the task open; retry or use only the documented fallback for that class. Never silently reclassify a missing figure.
 6. For paper-bound figures, read `references/paper-layout-gate.md`; apply its size guidance with review scope and timing governed by `../review-policy.md`. Inspect individual figures during drawing and compiled pages after paper layout; a figures-only request does not require a compiled paper.
 

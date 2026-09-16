@@ -47,7 +47,9 @@ class StyleTests(unittest.TestCase):
     def test_data_bounds_labels_size_and_color_are_adaptable(self):
         original = 'for level, a in [(95,.15),(80,.08),(50,.03)]:\n ax.fill_between(x, low[level], high[level], alpha=a, color=palette[i])\n'
         changed = 'for level, a in [(95,.15),(80,.08),(50,.03)]:\n ax.fill_between(weeks, actual_low[level], actual_high[level], alpha=a, color=bluepink[i])\nax.set_ylabel("New units")\nfig.set_size_inches(8,5)\n'
-        self.assertFalse(review.compare_sources(original, changed)['findings'])
+        findings = review.compare_sources(original, changed)['findings']
+        self.assertTrue(findings)
+        self.assertTrue(all(f['severity'] == 'advisory' and f['method'] == 'set_size_inches' for f in findings))
 
     def test_group_repetition_is_not_a_changed_style(self):
         original = 'for group in [1,2,3]:\n ax.scatter(x[group],y[group],alpha=.4,edgecolor="white")\n'

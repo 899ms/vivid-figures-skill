@@ -13,3 +13,5 @@ python "<SKILL>/templates/sem-violin-pearson/plot_sem_violin_pearson.py" --data 
 交付 `*_violin_pearson_combined.png`，同时保留两张单图 PNG/SVG、计算审计 XLSX 和 JSON。实际打开组合图检查。
 
 原版适用范围：默认按 1–7 分量表绘图，残差显示范围固定为 -2.8 到 2.8；残差来自每个构念对其余构念的 OLS 回归，不是 SEM 路径模型残差。原版直方图为计数、KDE 为密度且共轴；相关色条两端同色。这些行为原样保留，不应声称已修正；超出适用数据范围时说明所需适配。
+
+需要工作副本或适配时，按包根目录 [源码底稿与保真](../../template-fidelity.md) 使用 `scripts/prepare_complete_template.py` 保存完整源码及来源，然后运行工作副本的原CLI。
